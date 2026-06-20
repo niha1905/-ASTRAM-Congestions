@@ -1,0 +1,23 @@
+{
+  "scenarios": {
+    "rain": {
+      "duration_multiplier": 1.05,
+      "cause_probability_shift": {
+        "water_logging": 1.8
+      }
+    },
+    "metro_breakdown": {
+      "nearby_corridor_demand_shift": 0.3,
+      "duration_multiplier": 1.15
+    },
+    "plus_20k_visitors": {
+      "incident_volume_multiplier": 1.25,
+      "parking_overflow_multiplier": 1.35
+    },
+    "vip_movement": {
+      "duration_multiplier": 1.0,
+      "closure_probability_multiplier": 1.5
+    }
+  },
+  "description": "Model 10: scenario perturbation engine for What-If Studio."
+}

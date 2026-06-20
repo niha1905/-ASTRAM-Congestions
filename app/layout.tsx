@@ -1,0 +1,43 @@
+import { Analytics } from '@vercel/analytics/next'
+import type { Metadata, Viewport } from 'next'
+import { Geist, Geist_Mono } from 'next/font/google'
+import { Suspense } from 'react'
+import { Toaster } from '@/components/ui/sonner'
+import './globals.css'
+
+const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] })
+const geistMono = Geist_Mono({
+  variable: '--font-geist-mono',
+  subsets: ['latin'],
+})
+
+export const metadata: Metadata = {
+  title: 'ASTRAM CongestionIQ — Traffic Intelligence Platform',
+  description:
+    'AI-powered traffic operations platform for congestion prediction and city-scale mobility command.',
+  generator: 'v0.app',
+}
+
+export const viewport: Viewport = {
+  colorScheme: 'dark',
+  themeColor: '#0b1120',
+}
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode
+}>) {
+  return (
+    <html
+      lang="en"
+      className={`dark ${geistSans.variable} ${geistMono.variable} bg-background`}
+    >
+      <body className="font-sans antialiased">
+        <Suspense fallback={null}>{children}</Suspense>
+        <Toaster position="top-right" richColors />
+        {process.env.NODE_ENV === 'production' && <Analytics />}
+      </body>
+    </html>
+  )
+}

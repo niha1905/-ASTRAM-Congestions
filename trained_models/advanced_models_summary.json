@@ -1,0 +1,61 @@
+{
+  "duration_predictor": {
+    "artifact": "trained_models\\incident_duration_predictor_lgbm.pkl",
+    "metrics": {
+      "accuracy": 0.7590214067278287,
+      "num_classes": 3
+    }
+  },
+  "impact_score_model": {
+    "artifact": "trained_models\\event_impact_score_lgbm.pkl",
+    "metrics": {
+      "mae_score": 3.2420509317577872,
+      "r2": 0.576940580015242
+    }
+  },
+  "cascade_predictor": {
+    "artifact": "trained_models\\congestion_cascade_markov.pkl",
+    "metrics": {
+      "rows": 1398,
+      "mean_prob_30": 0.27493767905474814,
+      "mean_prob_60": 0.4058870679436138
+    }
+  },
+  "parking_overflow_predictor": {
+    "artifact": "trained_models\\parking_overflow_predictor.pkl",
+    "metrics": {
+      "accuracy": 0.7272727272727273,
+      "auc": 0.6896551724137931
+    }
+  },
+  "green_corridor_pathfinder": {
+    "artifact": "trained_models\\green_corridor_pathfinder_graph.pkl",
+    "metrics": {
+      "nodes": 22,
+      "edges": 462
+    }
+  },
+  "scenario_engine": {
+    "artifact": "trained_models\\scenario_perturbation_engine.json",
+    "metrics": {
+      "rain": {
+        "duration_multiplier": 1.05,
+        "cause_probability_shift": {
+          "water_logging": 1.8
+        }
+      },
+      "metro_breakdown": {
+        "nearby_corridor_demand_shift": 0.3,
+        "duration_multiplier": 1.15
+      },
+      "plus_20k_visitors": {
+        "incident_volume_multiplier": 1.25,
+        "parking_overflow_multiplier": 1.35
+      },
+      "vip_movement": {
+        "duration_multiplier": 1.0,
+        "closure_probability_multiplier": 1.5
+      }
+    }
+  }
+}
