@@ -1,36 +1,49 @@
+version: "1"
 services:
   - type: web
     name: astram-frontend
-    env: node
+    runtime: node
     plan: free
     rootDir: .
     buildCommand: npm install && npm run build
     startCommand: npm run start
-
+    autoDeployTrigger: commit
     envVars:
       - key: NODE_ENV
         value: production
-
-      # Set this in Render Dashboard after backend is deployed
+        sync: false
       - key: NEXT_PUBLIC_API_BASE_URL
+        value: https://astram-backend.onrender.com
+        sync: false
+      - key: NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+        sync: false
+      - key: GOOGLE_MAPS_SERVER_API_KEY
         sync: false
 
   - type: web
     name: astram-backend
-    env: python
+    runtime: python
     plan: free
     rootDir: backend
-
     buildCommand: pip install -r requirements.txt
-
     startCommand: gunicorn backend.wsgi:app --bind 0.0.0.0:$PORT --workers 2
-
+    autoDeployTrigger: commit
     envVars:
+      - key: CORS_ORIGINS
+        value: https://astram-frontend.onrender.com
+        sync: false
+      - key: MAPPLS_REST_API_KEY
+        value: "<SET_IN_RENDER_DASHBOARD>"
+        sync: false
+      - key: FLASK_APP
+        value: backend
+        sync: false
       - key: FLASK_ENV
         value: production
-
-      - key: CORS_ORIGINS
         sync: false
-
-      - key: MAPPLS_REST_API_KEY
+      - key: FLASK_HOST
+        value: 0.0.0.0
+        sync: false
+      - key: FLASK_PORT
+        value: "5000"
         sync: false
