@@ -6,21 +6,31 @@ services:
     rootDir: .
     buildCommand: npm install && npm run build
     startCommand: npm run start
+
     envVars:
       - key: NODE_ENV
         value: production
+
+      # Set this in Render Dashboard after backend is deployed
       - key: NEXT_PUBLIC_API_BASE_URL
-        value: https://astram-backend.onrender.com
+        sync: false
 
   - type: web
     name: astram-backend
     env: python
     plan: free
     rootDir: backend
+
     buildCommand: pip install -r requirements.txt
+
     startCommand: gunicorn backend.wsgi:app --bind 0.0.0.0:$PORT --workers 2
+
     envVars:
+      - key: FLASK_ENV
+        value: production
+
       - key: CORS_ORIGINS
-        value: https://astram-frontend.onrender.com
+        sync: false
+
       - key: MAPPLS_REST_API_KEY
-        value: "<SET_IN_RENDER_DASHBOARD>"
+        sync: false
