@@ -10,7 +10,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: NEXT_PUBLIC_API_BASE_URL
-        value: https://<backend-service>.onrender.com
+        value: https://astram-backend.onrender.com
 
   - type: web
     name: astram-backend
@@ -21,6 +21,6 @@ services:
     startCommand: gunicorn backend.wsgi:app --bind 0.0.0.0:$PORT --workers 2
     envVars:
       - key: CORS_ORIGINS
-        value: https://<frontend-service>.onrender.com
+        value: https://astram-frontend.onrender.com
       - key: MAPPLS_REST_API_KEY
-        value: ""
+        value: "<SET_IN_RENDER_DASHBOARD>"
