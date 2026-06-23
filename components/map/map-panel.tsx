@@ -1,24 +1,30 @@
 'use client'
 
-import { Layers, Loader2, Maximize2, Navigation, Radio, Route, Zap, Sparkles, X, ExternalLink, Shuffle } from 'lucide-react'
+import { Layers, Loader2, Maximize2, Navigation, Radio, Route, Zap, Sparkles, X, ExternalLink, Shuffle, AlertCircle } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { useState } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import type { Corridor, EmergencyRoute, EventLocation, Hotspot } from '@/lib/types'
+import { isMapplsConfigured } from '@/lib/mappls-loader'
 import { cn } from '@/lib/utils'
-import type { MapLayers } from './leaflet-map'
+import type { MapLayers } from './mappls-map'
 
-const LeafletMap = dynamic(() => import('./leaflet-map'), {
+const MapplsMap = dynamic(() => import('./mappls-map'), {
   ssr: false,
   loading: () => (
     <div className="flex h-full w-full items-center justify-center bg-card">
       <div className="flex flex-col items-center gap-2 text-muted-foreground">
         <Loader2 className="h-6 w-6 animate-spin text-primary" />
-        <span className="text-xs">Loading traffic grid…</span>
+        <span className="text-xs">Loading Mappls traffic grid…</span>
       </div>
     </div>
   ),
+})
+
+const LeafletMap = dynamic(() => import('./leaflet-map'), {
+  ssr: false,
 })
 interface MapPanelProps {
   center: [number, number]
@@ -71,6 +77,7 @@ export function MapPanel({
     ...defaultLayers,
   })
   const [showControls, setShowControls] = useState(true)
+  const [showLeafletFallback, setShowLeafletFallback] = useState(false)
 
   return (
     <div className={cn('glass relative overflow-hidden rounded-xl', height)}>
@@ -183,7 +190,7 @@ export function MapPanel({
               <div className="rounded-lg bg-success/5 p-2.5 text-xs border border-success/20">
                 <p className="font-semibold text-success uppercase text-[9px] tracking-wider flex items-center gap-1">
                   <Shuffle className="h-3 w-3 text-success animate-pulse" /> Traffic Diversion Plan
-                  {selectedEvent.traffic_plan.source === 'mappls' && (
+                  {selectedEvent.traffic_plan.source?.startsWith('mappls') && (
                     <span className="ml-auto inline-flex items-center gap-0.5 rounded bg-blue-500/15 border border-blue-500/30 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-blue-400">
                       🗺️ Mappls Route
                     </span>
@@ -198,7 +205,7 @@ export function MapPanel({
                   </p>
                 </div>
                 <p className="mt-2 text-[10px] text-muted-foreground italic leading-normal">
-                  {selectedEvent.traffic_plan.source === 'mappls'
+                  {selectedEvent.traffic_plan.source?.startsWith('mappls')
                     ? '* Road-accurate route fetched from Mappls (MapmyIndia) Route API.'
                     : '* Approximate offset route (Mappls API unavailable).'}
                 </p>
@@ -226,17 +233,46 @@ export function MapPanel({
       {loading ? (
         <Skeleton className="h-full w-full" />
       ) : (
-        <LeafletMap
-          center={center}
-          corridors={corridors}
-          hotspots={hotspots}
-          events={events}
-          route={route}
-          layers={layers}
-          zoom={zoom}
-          selectedEvent={selectedEvent}
-          onEventSelect={onEventSelect}
-        />
+        <>
+          {/* Mappls API Error Warning */}
+          {showLeafletFallback ? (
+            <div className="pointer-events-none absolute inset-x-0 bottom-4 z-[600] flex justify-center px-4">
+              <Alert className="pointer-events-auto w-full max-w-md border-warning/50 bg-warning/10 text-warning shadow-lg">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription className="text-xs">
+                  <strong>Mappls SDK unavailable.</strong> Showing Leaflet fallback map. Ensure MAPPLS_CLIENT_ID/MAPPLS_CLIENT_SECRET are valid and the backend is running.
+                </AlertDescription>
+              </Alert>
+            </div>
+          ) : null}
+          {isMapplsConfigured() && !showLeafletFallback ? (
+            <MapplsMap
+              center={center}
+              corridors={corridors}
+              hotspots={hotspots}
+              events={events}
+              route={route}
+              layers={layers}
+              zoom={zoom}
+              selectedEvent={selectedEvent}
+              onEventSelect={onEventSelect}
+              onMapplsError={setShowLeafletFallback}
+            />
+          ) : (
+            <LeafletMap
+              key="leaflet-fallback"
+              center={center}
+              corridors={corridors}
+              hotspots={hotspots}
+              events={events}
+              route={route}
+              layers={layers}
+              zoom={zoom}
+              selectedEvent={selectedEvent}
+              onEventSelect={onEventSelect}
+            />
+          )}
+        </>
       )}
     </div>
   )

@@ -3,10 +3,19 @@
  * Handles all communication with Flask backend
  */
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_ML_API_URL?.trim() ||
-  process.env.NEXT_PUBLIC_API_BASE_URL?.trim() ||
-  (process.env.NODE_ENV !== 'production' ? 'http://localhost:5000' : '')
+const configuredMLApiUrl = process.env.NEXT_PUBLIC_ML_API_URL?.trim()
+const configuredApiUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.trim()
+const DEFAULT_API_BASE_URL = process.env.NODE_ENV !== 'production' ? 'http://127.0.0.1:5000' : ''
+
+function getConfiguredBaseUrl(): string {
+  const candidate = configuredMLApiUrl || configuredApiUrl
+  if (candidate && candidate.includes('127.0.0.1:8000')) {
+    return DEFAULT_API_BASE_URL
+  }
+  return candidate || DEFAULT_API_BASE_URL
+}
+
+const API_BASE_URL = getConfiguredBaseUrl()
 
 function normalizeBase(base: string) {
   const b = (base || '').trim().replace(/\/+$/g, '')

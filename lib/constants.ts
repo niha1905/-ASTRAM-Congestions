@@ -6,8 +6,11 @@ export const MAP_FLY_TO_ZOOM = 14
 /** Default number of news items to request from the backend/RSS. */
 export const NEWS_DEFAULT_LIMIT = 20
 
-/** API request timeout in milliseconds. */
+/** Default API request timeout in milliseconds. */
 export const REQUEST_TIMEOUT_MS = 10_000
+
+/** Dashboard aggregates news + ML + routing; allow extra time on cold start. */
+export const DASHBOARD_TIMEOUT_MS = 60_000
 
 /** Number of skeleton placeholder cards to render while data is loading. */
 export const SKELETON_LOADING_COUNT = 4

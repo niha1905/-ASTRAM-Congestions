@@ -14,8 +14,11 @@ from pathlib import Path
 import json
 import sys
 import warnings
+import logging
 
 warnings.filterwarnings('ignore')
+
+logger = logging.getLogger(__name__)
 
 import pandas as pd
 from sklearn.model_selection import train_test_split, StratifiedKFold
@@ -45,10 +48,9 @@ def main():
     out_dir.mkdir(parents=True, exist_ok=True)
 
     if not ds:
-        print('Dataset not found in repo root; skipping training.')
+        logger.info('Dataset not found in repo root; skipping training.')
         return
-
-    print('Loading dataset:', ds)
+    logger.info('Loading dataset: %s', ds)
     df = pd.read_csv(ds)
 
     # Build duration from available timestamps when no explicit duration column exists
@@ -61,7 +63,7 @@ def main():
 
     df = df.dropna(subset=['duration_min'])
     if df['duration_min'].empty:
-        print('No valid duration values found; skipping training.')
+        logger.info('No valid duration values found; skipping training.')
         return
 
     df['duration_bucket'] = df['duration_min'].apply(bucket_duration_minutes)
@@ -130,9 +132,9 @@ def main():
     }
     summary_path.write_text(json.dumps(summary, indent=2), encoding='utf-8')
 
-    print('Trained duration classifier saved to', model_path)
-    print('Metrics written to', metrics_path)
-    print('Updated model summary at', summary_path)
+    logger.info('Trained duration classifier saved to %s', model_path)
+    logger.info('Metrics written to %s', metrics_path)
+    logger.info('Updated model summary at %s', summary_path)
 
 
 if __name__ == '__main__':

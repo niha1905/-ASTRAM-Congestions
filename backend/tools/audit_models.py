@@ -59,7 +59,8 @@ def run():
     out_dir.mkdir(parents=True, exist_ok=True)
 
     if not ds:
-        print('Dataset not found; skipping audit.')
+        logger = logging.getLogger(__name__)
+        logger.info('Dataset not found; skipping audit.')
         return
 
     df = pd.read_csv(ds)
@@ -114,7 +115,8 @@ def run():
 
     out_path = out_dir / 'permutation_importance_report.json'
     out_path.write_text(json.dumps(reports, indent=2), encoding='utf-8')
-    print('Wrote permutation importance report to', out_path)
+    logger = logging.getLogger(__name__)
+    logger.info('Wrote permutation importance report to %s', out_path)
 
 
 if __name__ == '__main__':

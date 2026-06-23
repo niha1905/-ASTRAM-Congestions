@@ -23,9 +23,15 @@ from ..models.predictors import (
     ScenarioEnginePredictor,
 )
 from ..models.model_loader import model_loader
+from ..mappls_client import fetch_mappls_routes_with_alternatives, get_mappls_access_token, is_mappls_configured
+from ..corridor_engine import (
+    build_congestion_trend,
+    build_dynamic_corridors,
+    map_event_to_corridor,
+)
+from ..news_geo import build_traffic_plan, resolve_news_location
 from ..config import (
     BANGALORE_LOCATIONS,
-    CORRIDOR_BASE_CONGESTION,
     NEWS_MAX_ITEMS,
     NEWS_QUERY,
     SERIES_START_HOUR,
@@ -44,7 +50,6 @@ dashboard_bp = Blueprint('dashboard', __name__, url_prefix='/api')
 
 # ── Google Maps Geocoding helper ──────────────────────────────────────────────
 _GOOGLE_MAPS_KEY = os.environ.get('GOOGLE_MAPS_SERVER_API_KEY', '')
-_MAPPLS_KEY = os.environ.get('MAPPLS_REST_API_KEY', '')
 _BANGALORE_BOUNDS = '12.7343,77.3791|13.1688,77.8834'
 
 
@@ -82,16 +87,19 @@ def _geocode_mappls(query: str) -> tuple:
     """Geocode using Mappls (MapmyIndia) Atlas API as secondary fallback.
     Returns (lat, lon) or None.
     """
-    if not _MAPPLS_KEY:
+    token = get_mappls_access_token()
+    if not token:
         return None
     try:
+        params = {
+            'address': query + ' Bangalore',
+            'itemCount': 1,
+            'access_token': token,
+        }
+
         resp = requests.get(
             'https://atlas.mappls.com/api/places/geocode',
-            params={
-                'address': query + ' Bangalore',
-                'itemCount': 1,
-                'access_token': _MAPPLS_KEY,
-            },
+            params=params,
             timeout=5
         )
         if resp.status_code == 200:
@@ -225,7 +233,6 @@ def get_dashboard():
 
         events = []
         hotspots = []
-        corridors = []
         
         total_incidents = 0
         impact_vals = []
@@ -234,30 +241,9 @@ def get_dashboard():
         barricades_total = 0
         parking_probs = []
 
-        locality_to_corridor = {
-            'koramangala': 'Hosur Road',
-            'indiranagar': 'CBD 2',
-            'mg road': 'CBD 1',
-            'whitefield': 'ORR East 1',
-            'electronic city': 'Hosur Road',
-            'yelahanka': 'Airport New South Road',
-            'hebbal': 'Bellary Road 1',
-            'jayanagar': 'Bannerghata Road',
-            'rajajinagar': 'West of Chord Road',
-        }
-
-        default_corridors_data = {
-            cname: {
-                'congestion': CORRIDOR_BASE_CONGESTION.get(cname, 50),
-                'path': path,
-            }
-            for cname, path in {
-                'Hosur Road': [[12.9352, 77.6245], [12.9300, 77.6350], [12.9250, 77.6400]],
-                'ORR East 1': [[12.9699, 77.7490], [12.9750, 77.7500], [12.9800, 77.7510]],
-                'CBD 2':      [[12.9719, 77.6412], [12.9650, 77.6415], [12.9590, 77.6420]],
-                'CBD 1':      [[12.9754, 77.6050], [12.9750, 77.5950]],
-            }.items()
-        }
+        hour = datetime.utcnow().hour
+        weekday = datetime.utcnow().weekday()
+        month = datetime.utcnow().month
 
         seen_localities = set()
         eidx = 1
@@ -275,24 +261,33 @@ def get_dashboard():
             
             found_pos = None
             matched_key = None
-            for k, coords in BANGALORE_LOCATIONS.items():
-                if k in tkn:
-                    found_pos = coords
-                    zone = k.title()
-                    matched_key = k
-                    break
-            if not found_pos:
-                # Multi-tier geocoding: Google Maps API → Mappls API → safe city-centre
-                found_pos = _smart_geocode(title, it.get('summary', ''))
-                zone = 'Central'
-                matched_key = 'mg road'
+            lat, lon, zone, matched_key = resolve_news_location(
+                title,
+                it.get('summary', ''),
+                scraper_location=it.get('location'),
+            )
+            found_pos = (lat, lon)
+            traffic_plan = build_traffic_plan(matched_key, found_pos, zone)
 
-            corridor_name = locality_to_corridor.get(matched_key, 'CBD 2')
-            hour = datetime.utcnow().hour
-            weekday = datetime.utcnow().weekday()
+            title_clean = title
+            if ' - ' in title:
+                title_clean = title.rsplit(' - ', 1)[0]
+            elif ' | ' in title:
+                title_clean = title.rsplit(' | ', 1)[0]
+
+            corridor_name = map_event_to_corridor({
+                'name': title_clean,
+                'position': [lat, lon],
+                'traffic_plan': traffic_plan,
+                'news': {
+                    'title': title_clean,
+                    'summary': it.get('summary', ''),
+                    'location': it.get('location'),
+                },
+            }, matched_key=matched_key)
 
             # ML predictions
-            vol = IncidentVolumePredictor.predict(zone, corridor_name, event_type, hour, weekday, datetime.utcnow().month)
+            vol = IncidentVolumePredictor.predict(zone, corridor_name, event_type, hour, weekday, month)
             vol_n = int(vol.get('prediction', 0)) if isinstance(vol.get('prediction', 0), (int, float)) else 1
             total_incidents += vol_n
 
@@ -303,7 +298,7 @@ def get_dashboard():
             officers_total += int(resources.get('officers_needed', 0))
             barricades_total += int(resources.get('barricades_needed', 0))
 
-            hotspot_res = HotspotRiskPredictor.predict(matched_key, hour, weekday, event_type)
+            hotspot_res = HotspotRiskPredictor.predict(matched_key or zone or 'mg road', hour, weekday, event_type)
             risk_score = float(hotspot_res.get('risk_score', 0))
             hotspot_vals.append(risk_score)
 
@@ -313,12 +308,6 @@ def get_dashboard():
             parking_res = ParkingOverflowPredictor.predict(event_type, corridor_name, hour, weekday, closure_prob)
             parking_probs.append(float(parking_res.get('parking_overflow_probability', 0)))
 
-            title_clean = title
-            if ' - ' in title:
-                title_clean = title.rsplit(' - ', 1)[0]
-            elif ' | ' in title:
-                title_clean = title.rsplit(' | ', 1)[0]
-
             events.append({
                 'id': f'e{eidx}',
                 'name': title_clean,
@@ -326,6 +315,14 @@ def get_dashboard():
                 'position': [found_pos[0], found_pos[1]],
                 'attendance': estimate_attendance(title, it.get('summary', ''), event_type),
                 'priority': priority,
+                'traffic_plan': traffic_plan,
+                'news': {
+                    'title': title_clean,
+                    'link': it.get('link', ''),
+                    'summary': it.get('summary', ''),
+                    'source': 'Google News',
+                    'location': it.get('location'),
+                },
             })
             eidx += 1
 
@@ -370,32 +367,27 @@ def get_dashboard():
                     })
                     ridx += 1
 
-            if matched_key not in seen_localities:
-                seen_localities.add(matched_key)
+            hotspot_label = (matched_key or zone or 'bangalore').lower()
+            if hotspot_label not in seen_localities:
+                seen_localities.add(hotspot_label)
                 hotspots.append({
                     'id': f'h{hidx}',
-                    'name': matched_key.title() + ' Corridor',
+                    'name': (matched_key or zone or 'Bangalore').title() + ' Corridor',
                     'position': [found_pos[0], found_pos[1]],
                     'risk': int(risk_score * 100) if risk_score < 1 else int(risk_score),
                     'level': 'severe' if risk_score > 0.70 else 'high' if risk_score > 0.40 else 'moderate',
                 })
                 hidx += 1
 
-        cidx = 1
-        for cname, cinfo in default_corridors_data.items():
-            congestion = cinfo['congestion']
-            for ev in events:
-                if cname == locality_to_corridor.get(ev['name'].lower(), ''):
-                    congestion = min(99, congestion + 15)
-            
-            corridors.append({
-                'id': f'c{cidx}',
-                'name': cname,
-                'congestion': congestion,
-                'status': 'severe' if congestion > 75 else 'high' if congestion > 50 else 'moderate' if congestion > 25 else 'low',
-                'path': cinfo['path']
-            })
-            cidx += 1
+        corridors = build_dynamic_corridors(events, hour, weekday, month)
+        congestion_series = build_congestion_trend(
+            hour,
+            weekday,
+            month,
+            events,
+            window_hours=SERIES_WINDOW_HOURS,
+            start_hour=SERIES_START_HOUR,
+        )
 
         # Build incident-forecast series using the ML model instead of random values
         series_hours = []
@@ -433,7 +425,7 @@ def get_dashboard():
             ),
             'series': {
                 'incidentForecast': series_hours,
-                'congestionTrend': series_hours,
+                'congestionTrend': congestion_series,
                 'impactTrend': series_hours,
                 'parkingProbability': series_hours,
             },
@@ -722,6 +714,17 @@ def analyze_event():
                 "cascade": cascade
             }
         }
+        # Include optional user-selected location metadata if provided
+        location_name = data.get('locationName') or data.get('location_name')
+        if location_name:
+            result['location'] = {
+                'name': location_name,
+                'lat': data.get('locationLat') or data.get('location_lat'),
+                'lon': data.get('locationLon') or data.get('location_lon'),
+                'placeId': data.get('locationPlaceId') or data.get('location_place_id'),
+                'eLoc': data.get('locationELoc') or data.get('location_eloc'),
+                'address': data.get('locationAddress') or data.get('location_address'),
+            }
         
         
         return jsonify(result), 200
@@ -957,7 +960,28 @@ def get_emergency_route():
         if not destination_coord:
             destination_coord = [12.9716, 77.5946]
 
-        if gm_key:
+        routing_source = 'graph'
+
+        # Tier 1: Mappls route_adv with alternatives (preferred)
+        if is_mappls_configured():
+            try:
+                (
+                    geo_primary_path,
+                    geo_alt_path,
+                    dist_primary,
+                    dist_alt,
+                    eta_primary,
+                    eta_alt,
+                ) = fetch_mappls_routes_with_alternatives(
+                    origin[0], origin[1], destination_coord[0], destination_coord[1]
+                )
+                if geo_primary_path:
+                    routing_source = 'mappls'
+            except Exception:
+                geo_primary_path = []
+
+        # Tier 2: Google Directions API fallback
+        if not geo_primary_path and gm_key:
             try:
                 params = {
                     'origin': f"{origin[0]},{origin[1]}",
@@ -989,30 +1013,34 @@ def get_emergency_route():
                         if legs2:
                             dist_alt = legs2[0].get('distance', {}).get('value', 0) / 1000.0
                             eta_alt = round(legs2[0].get('duration', {}).get('value', 0) / 60.0)
+                    if geo_primary_path:
+                        routing_source = 'google'
             except Exception:
-                # fall back to model path if Google call fails
                 geo_primary_path = []
 
-        # 1. Compute primary path from graph-based model if Google not used or failed
+        primary_path = []
+        alt_path = []
+        primary_weight = 0.0
+        alt_weight = 0.0
+
+        # Tier 3: Dijkstra graph model when external routing unavailable
         if not geo_primary_path:
             primary_path, primary_weight = run_dijkstra(graph, mapped_source, mapped_destination)
-        
-        # 2. Compute alternative detour path by removing the bottleneck/middle node of the primary path
-        alt_path = []
-        alt_weight = 0.0
-        if len(primary_path) >= 3:
-            temp_graph = copy.deepcopy(graph)
-            bottleneck_node = primary_path[len(primary_path) // 2]
-            if bottleneck_node in temp_graph:
-                del temp_graph[bottleneck_node]
-            for n in temp_graph:
-                temp_graph[n] = [e for e in temp_graph[n] if e['to'] != bottleneck_node]
-            
-            alt_path, alt_weight = run_dijkstra(temp_graph, mapped_source, mapped_destination)
 
-        # Map nodes to coordinates
-        geo_primary_path = [centroid_map[node] for node in primary_path if node in centroid_map]
-        geo_alt_path = [centroid_map[node] for node in alt_path if node in centroid_map]
+            if len(primary_path) >= 3:
+                temp_graph = copy.deepcopy(graph)
+                bottleneck_node = primary_path[len(primary_path) // 2]
+                if bottleneck_node in temp_graph:
+                    del temp_graph[bottleneck_node]
+                for n in temp_graph:
+                    temp_graph[n] = [e for e in temp_graph[n] if e['to'] != bottleneck_node]
+
+                alt_path, alt_weight = run_dijkstra(temp_graph, mapped_source, mapped_destination)
+
+            geo_primary_path = [centroid_map[node] for node in primary_path if node in centroid_map]
+            geo_alt_path = [centroid_map[node] for node in alt_path if node in centroid_map]
+        else:
+            primary_path = [mapped_source, mapped_destination]
         
         # Fallbacks for empty/short coordinates
         if len(geo_primary_path) < 2:
@@ -1043,8 +1071,12 @@ def get_emergency_route():
                             break
             return dist
 
-        dist_primary = compute_distance(primary_path) or 12.5
-        dist_alt = compute_distance(alt_path) or (dist_primary + 1.8)
+        if routing_source == 'graph':
+            dist_primary = compute_distance(primary_path) or 12.5
+            dist_alt = compute_distance(alt_path) or (dist_primary + 1.8)
+        else:
+            dist_primary = dist_primary or 12.5
+            dist_alt = dist_alt or (dist_primary + 1.8)
         
         # ensure we have ETA/distance values (prefer Google values if available)
         if eta_primary is None:
@@ -1088,6 +1120,7 @@ def get_emergency_route():
             "signals": signals,
             "bottlenecks": bottlenecks,
             "status": "ready",
+            "routingSource": routing_source,
             "modelPath": primary_path,
             "signalOverrideSequence": [f"Clear route at {node}" for node in primary_path],
         }

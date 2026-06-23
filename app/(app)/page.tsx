@@ -92,21 +92,30 @@ export default function DashboardPage() {
         // fetch live news and merge as map events when available
         try {
           const newsItems: any[] = await api.fetchNews()
-          const mapped = (newsItems || []).map((n, i) => ({
-            id: `news${i}`,
-            name: n.news?.title || n.title || 'News',
-            type: n.inferred?.event_type || 'news',
-            position: (n.position ? [n.position.lat, n.position.lon] : MAP_DEFAULT_CENTER) as [number, number],
-            attendance: 0,
-            priority: n.inferred?.priority || 'Medium',
-            predictions: n.predictions,
-            news: n.news || n,
-            sentiment: n.sentiment,
-            pre_measures: n.pre_measures,
-            traffic_plan: n.traffic_plan,
-          }))
+          const normalizeTitle = (value: string) => value.trim().toLowerCase()
+          const newsByTitle = new Map(
+            (newsItems || []).map((n) => [
+              normalizeTitle(n.news?.title || n.title || ''),
+              n,
+            ]),
+          )
+
           dash.map = dash.map || { center: MAP_DEFAULT_CENTER, corridors: [], hotspots: [], events: [] }
-          dash.map.events = [...(dash.map.events || []), ...mapped]
+          dash.map.events = (dash.map.events || []).map((event) => {
+            const match = newsByTitle.get(normalizeTitle(event.name || ''))
+            if (!match) return event
+            return {
+              ...event,
+              sentiment: match.sentiment ?? event.sentiment,
+              pre_measures: match.pre_measures ?? event.pre_measures,
+              predictions: match.predictions ?? event.predictions,
+              news: match.news ?? event.news,
+              traffic_plan: match.traffic_plan ?? event.traffic_plan,
+              position: match.position
+                ? ([match.position.lat, match.position.lon] as [number, number])
+                : event.position,
+            }
+          })
         } catch (e) {
           // ignore news fetch errors
         }
@@ -315,7 +324,7 @@ function LiveNewsFeed({
   onRunAnalysis?: (ev: EventLocation) => void
 }) {
   const router = useRouter()
-  const newsEvents = events.filter((e) => e.id.startsWith('news'))
+  const newsEvents = events.filter((e) => e.news || (e.id && String(e.id).startsWith('news')))
   const filteredNews = (newsEvents || []).filter((e) => {
     if (!todayOnly) return true
     const published = e.news?.published || (e as any).published || e.news?.linkPublished

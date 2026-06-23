@@ -2,6 +2,9 @@ import os
 
 # Mappls REST API key – should be set in environment variables.
 MAPPLS_REST_API_KEY = os.getenv('MAPPLS_REST_API_KEY', '')
+MAPPLS_WEB_SDK_KEY = os.getenv('MAPPLS_WEB_SDK_KEY', '') or MAPPLS_REST_API_KEY
+MAPPLS_CLIENT_ID = os.getenv('MAPPLS_CLIENT_ID', '')
+MAPPLS_CLIENT_SECRET = os.getenv('MAPPLS_CLIENT_SECRET', '')
 
 # ── News scraping config ──────────────────────────────────────────────────────
 # Max news items to fetch per dashboard refresh (override via env).

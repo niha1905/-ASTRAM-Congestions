@@ -28,6 +28,20 @@ export interface Hotspot {
   level: RiskLevel
 }
 
+export interface TrafficPlan {
+  affected?: string
+  divert_to?: string
+  path?: [number, number][]
+  diversion_path?: [number, number][]
+  source?: 'mappls' | 'mappls_partial' | 'offset_fallback' | string
+  origin?: [number, number]
+  destination?: [number, number]
+  distance_km?: number
+  alt_distance_km?: number
+  eta_min?: number
+  alt_eta_min?: number
+}
+
 export interface EventLocation {
   id: string
   name: string
@@ -40,7 +54,7 @@ export interface EventLocation {
   news?: any
   sentiment?: 'positive' | 'negative' | 'neutral'
   impact_score?: number
-  traffic_plan?: any
+  traffic_plan?: TrafficPlan
   pre_measures?: any
   inferred?: any
   link?: string
@@ -89,6 +103,7 @@ export interface AnalysisResult {
   cascadeRisk: number
   confidence: Record<string, number>
   recommendations: Recommendation[]
+  modelOutputs?: Record<string, any>
 }
 
 export interface ScenarioMetrics {
@@ -168,4 +183,11 @@ export interface EventInput {
   priority: Priority
   date: string
   time: string
+  // Optional user-selected location for the event
+  locationName?: string
+  locationLat?: number
+  locationLon?: number
+  locationPlaceId?: string
+  locationELoc?: string
+  locationAddress?: string
 }

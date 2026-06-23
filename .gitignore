@@ -13,3 +13,9 @@ __v0_jsx-dev-runtime.ts
 node_modules
 .next/
 .DS_Store
+\n+# Archive of large data / notebooks
+archive/
+
+# Trained model artifacts
+trained_models/
+backend/trained_models/trained_models/

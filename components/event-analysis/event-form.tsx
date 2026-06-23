@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import MapplsAutosuggest from '../ui/mappls-autosuggest'
 import {
   Select,
   SelectContent,
@@ -46,6 +47,12 @@ export function EventForm({
     priority: 'critical',
     date: '2026-06-20',
     time: '18:30',
+    locationName: undefined,
+    locationLat: undefined,
+    locationLon: undefined,
+    locationPlaceId: undefined,
+    locationELoc: undefined,
+    locationAddress: undefined,
   })
 
   const set = <K extends keyof EventInput>(key: K, value: EventInput[K]) =>
@@ -132,6 +139,23 @@ export function EventForm({
           <Input type="time" value={form.time} onChange={(e) => set('time', e.target.value)} className="bg-muted/40" />
         </Field>
       </div>
+
+      <Field label="Location">
+        <MapplsAutosuggest
+          onSelect={(s) => {
+            set('locationName', s.label || '')
+            if (s.lat) set('locationLat', Number(s.lat))
+            if (s.lon) set('locationLon', Number(s.lon))
+            if ((s as any).placeId) set('locationPlaceId', (s as any).placeId)
+            if ((s as any).eLoc) set('locationELoc', (s as any).eLoc)
+            if ((s as any).address) set('locationAddress', (s as any).address)
+          }}
+        />
+        {form.locationName && (
+          <div className="mt-2 text-xs text-muted-foreground">Selected: {form.locationName} {form.locationLat ? `(${form.locationLat.toFixed(5)}, ${form.locationLon?.toFixed(5)})` : ''}</div>
+        )}
+        {form.locationAddress && <div className="text-xs text-muted-foreground">{form.locationAddress}</div>}
+      </Field>
 
       <Button type="submit" className="w-full gap-2" disabled={loading}>
         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}

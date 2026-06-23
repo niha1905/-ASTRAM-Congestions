@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import { Suspense } from 'react'
 import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
+import GlobalUnhandledRejection from '@/components/client/unhandled-rejection'
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] })
 const geistMono = Geist_Mono({
@@ -34,6 +35,7 @@ export default function RootLayout({
       className={`dark ${geistSans.variable} ${geistMono.variable} bg-background`}
     >
       <body className="font-sans antialiased">
+        <GlobalUnhandledRejection />
         <Suspense fallback={null}>{children}</Suspense>
         <Toaster position="top-right" richColors />
         {process.env.NODE_ENV === 'production' && <Analytics />}

@@ -8,13 +8,16 @@ Rules (can be adjusted):
 import json
 from pathlib import Path
 import sys
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def main():
     base = Path(__file__).resolve().parents[1] / 'trained_models'
     summary_path = base / 'advanced_models_summary.json'
     if not summary_path.exists():
-        print('advanced_models_summary.json not found — skipping strict checks.')
+        logger.info('advanced_models_summary.json not found — skipping strict checks.')
         return 0
 
     summary = json.loads(summary_path.read_text(encoding='utf-8'))
@@ -22,23 +25,23 @@ def main():
 
     dur = summary.get('duration_predictor', {}).get('metrics', {})
     if dur.get('r2', 0) < 0:
-        print('ERROR: duration_predictor R2 is negative:', dur.get('r2'))
+        logger.error('duration_predictor R2 is negative: %s', dur.get('r2'))
         exit_code = 2
 
     impact = summary.get('impact_score_model', {}).get('metrics', {})
     if impact.get('r2', 0) > 0.99:
-        print('ERROR: impact_score_model R2 suspiciously high:', impact.get('r2'))
+        logger.error('impact_score_model R2 suspiciously high: %s', impact.get('r2'))
         exit_code = 3
 
     parking = summary.get('parking_overflow_predictor', {}).get('metrics', {})
     if parking.get('auc', 0) >= 0.999:
-        print('ERROR: parking_overflow_predictor AUC suspicious/perfect:', parking.get('auc'))
+        logger.error('parking_overflow_predictor AUC suspicious/perfect: %s', parking.get('auc'))
         exit_code = 4
 
     if exit_code == 0:
-        print('Model metric checks passed.')
+        logger.info('Model metric checks passed.')
     else:
-        print('Model metric checks failed. See errors above.')
+        logger.warning('Model metric checks failed. See errors above.')
 
     return exit_code
 

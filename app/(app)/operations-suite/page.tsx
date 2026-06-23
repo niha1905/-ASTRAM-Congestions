@@ -11,10 +11,11 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { RouteMap } from '@/components/map/route-map'
 import { api } from '@/lib/api'
 import { toast } from 'sonner'
 import { riskHexFromScore } from '@/lib/ui'
-import type { EventInput } from '@/lib/types'
+import type { EmergencyRoute, EventInput } from '@/lib/types'
 
 const TABS = ['Event Analysis', 'Event Replay'] as const
 
@@ -240,7 +241,7 @@ function ScenarioSimulatorSection() {
 function EmergencyRoutingSection() {
   const [source, setSource] = useState('Stadium Gate 3')
   const [destination, setDestination] = useState('Victoria Hospital')
-  const [route, setRoute] = useState<any | null>(null)
+  const [route, setRoute] = useState<EmergencyRoute | null>(null)
   const [loading, setLoading] = useState(false)
 
   const compute = async () => {
@@ -274,12 +275,19 @@ function EmergencyRoutingSection() {
         {loading ? <Skeleton className="h-[420px] rounded-xl" /> : route ? (
           <div className="space-y-4">
             <div className="glass rounded-xl p-5">
-              <div className="flex items-start justify-between">
+              <div className="flex items-start justify-between gap-4">
                 <div>
                   <h2 className="text-lg font-semibold">{route.source} → {route.destination}</h2>
                   <p className="text-xs text-muted-foreground">ETA {route.etaMinutes} min · {route.distanceKm} km</p>
                 </div>
+                <div className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                  {route.status === 'ready' ? 'Green corridor ready' : route.status}
+                </div>
               </div>
+            </div>
+
+            <div className="rounded-xl border border-border/60 bg-background p-0 shadow-sm">
+              <RouteMap route={route} />
             </div>
           </div>
         ) : (

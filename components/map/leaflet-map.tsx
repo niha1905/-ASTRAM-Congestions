@@ -8,6 +8,17 @@ import type { Corridor, EmergencyRoute, EventLocation, Hotspot } from '@/lib/typ
 import { RISK_HEX, riskHexFromScore } from '@/lib/ui'
 import { MAP_DEFAULT_ZOOM, MAP_FLY_TO_ZOOM } from '@/lib/constants'
 
+const MAPPLS_REST_API_KEY = process.env.NEXT_PUBLIC_MAPPLS_REST_API_KEY
+const MAPPLS_TILE_URL = MAPPLS_REST_API_KEY
+  ? `https://apis.mappls.com/advancedmaps/v1/${MAPPLS_REST_API_KEY}/map_tile/256/{z}/{x}/{y}.png`
+  : ''
+const CARTO_TILE_URL = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+const BASE_TILE_URL = MAPPLS_TILE_URL || CARTO_TILE_URL
+const BASE_TILE_ATTRIBUTION = MAPPLS_REST_API_KEY
+  ? '&copy; Mappls &copy; OpenStreetMap'
+  : '&copy; OpenStreetMap &copy; CARTO'
+const FALLBACK_TILE_URL = CARTO_TILE_URL
+
 export interface MapLayers {
   corridors: boolean
   hotspots: boolean
@@ -26,6 +37,7 @@ interface LeafletMapProps {
   zoom?: number
   selectedEvent?: EventLocation | null
   onEventSelect?: (event: EventLocation | null) => void
+  onMapplsError?: (hasError: boolean) => void
 }
 
 function getLocalityColor(name: string): string {
@@ -52,10 +64,12 @@ export default function LeafletMap({
   zoom = MAP_DEFAULT_ZOOM,
   selectedEvent = null,
   onEventSelect,
+  onMapplsError,
 }: LeafletMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<L.Map | null>(null)
   const overlayRef = useRef<L.LayerGroup | null>(null)
+  const [mapplsErrorReported, setMapplsErrorReported] = useState(false)
   
 
   
@@ -71,15 +85,31 @@ export default function LeafletMap({
       zoomControl: true,
       attributionControl: true,
     })
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; OpenStreetMap &copy; CARTO',
+    const tileLayer = L.tileLayer(BASE_TILE_URL, {
+      attribution: BASE_TILE_ATTRIBUTION,
       maxZoom: 19,
+    })
+
+    tileLayer.on('tileerror', () => {
+      if (BASE_TILE_URL !== FALLBACK_TILE_URL) {
+        // Report Mappls error once
+        if (!mapplsErrorReported) {
+          setMapplsErrorReported(true)
+          onMapplsError?.(true)
+        }
+        tileLayer.setUrl(FALLBACK_TILE_URL)
+      }
     }).addTo(map)
     overlayRef.current = L.layerGroup().addTo(map)
     mapRef.current = map
-    setTimeout(() => map.invalidateSize(), 200)
+    const invalidateTimer = window.setTimeout(() => {
+      if (mapRef.current === map && containerRef.current?.isConnected) {
+        map.invalidateSize()
+      }
+    }, 200)
 
     return () => {
+      window.clearTimeout(invalidateTimer)
       map.remove()
       mapRef.current = null
       overlayRef.current = null
@@ -162,18 +192,33 @@ export default function LeafletMap({
 
     if (layers.events) {
       events.forEach((e) => {
-        if (!e?.position || !Array.isArray(e.position) || e.position.length < 2) return
+        // prefer explicit news-geocoded position when available; normalize shape
+        let pos: any = e.position ?? null
+        if ((!pos || (Array.isArray(pos) && pos.length < 2)) && e.news && (e.news.position || e.news.lat || e.news.lon)) {
+          const np = e.news.position || (e.news.lat ? { lat: e.news.lat, lon: e.news.lon } : null)
+          if (np && typeof np === 'object' && 'lat' in np && 'lon' in np) {
+            pos = [np.lat, np.lon]
+          }
+        }
+
+        // support backend shape { lat:.., lon:.. }
+        if (pos && !Array.isArray(pos) && typeof pos === 'object' && 'lat' in pos && 'lon' in pos) {
+          pos = [pos.lat, pos.lon]
+        }
+
+        if (!pos || !Array.isArray(pos) || pos.length < 2) return
         try {
           const score = (e.predictions?.impact?.impact_score as number) ?? e.impact_score ?? 0
           const color = riskHexFromScore(score)
           const isSelected = selectedEvent && selectedEvent.id === e.id
-          
+
           // Draw marker with border indicating if selected
           const borderStyle = isSelected ? 'border: 3px solid #fff; box-shadow: 0 0 15px #fff;' : `box-shadow:0 0 0 6px ${color}33;`
-          const iconHtml = `<div style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;background:${color};${borderStyle}color:#fff;font-size:11px;font-weight:700;cursor:pointer">E</div>`
+          // make the marker label text black for better readability on light backgrounds
+          const iconHtml = `<div style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;background:${color};${borderStyle}color:#000;font-size:11px;font-weight:700;cursor:pointer">E</div>`
           const icon = L.divIcon({ className: '', html: iconHtml, iconSize: [30, 30], iconAnchor: [15, 15] })
-          
-          const marker = L.marker(e.position, { icon })
+
+          const marker = L.marker(pos, { icon })
             .bindTooltip(`${e.name} · ${e.attendance?.toLocaleString?.() ?? e.attendance}`, { sticky: true })
             .addTo(group)
 
@@ -228,7 +273,7 @@ export default function LeafletMap({
       if (plan.path && Array.isArray(plan.path) && plan.path.length >= 2) {
         try {
           const routeSource = plan.source === 'mappls' ? ' · via Mappls' : ''
-          L.polyline(plan.path, {
+          const affectedLine = L.polyline(plan.path, {
             color: '#ef4444',
             weight: 6,
             dashArray: '5, 8',
@@ -236,12 +281,24 @@ export default function LeafletMap({
             lineCap: 'round',
           })
             .bindTooltip(`🚧 Affected: ${plan.affected || 'Congested Area'}${routeSource}`, { sticky: true })
+            .on('click', (e) => {
+              L.popup({ maxWidth: 240 })
+                .setLatLng(e.latlng)
+                .setContent(`<div style="font-size:12px"><strong>Alternate route available</strong><div>Tap the green diversion line to inspect the alternate path around the affected area.</div></div>`)
+                .openOn(map)
+            })
             .addTo(group)
 
           // Block marker
           const blockHtml = `<div style="display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:#ef4444;border:2px solid #fff;color:#fff;font-size:12px;font-weight:700;box-shadow:0 0 10px #ef4444">!</div>`
           const blockIcon = L.divIcon({ className: '', html: blockHtml, iconSize: [24, 24], iconAnchor: [12, 12] })
           L.marker(plan.path[0], { icon: blockIcon }).addTo(group)
+
+          if (plan.diversion_path && Array.isArray(plan.diversion_path) && plan.diversion_path.length >= 2) {
+            L.marker(plan.diversion_path[0], { icon: L.divIcon({ className: '', html: `<div style="display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:#10b981;border:2px solid #fff;color:#fff;font-size:12px;font-weight:700;box-shadow:0 0 10px #10b981">→</div>`, iconSize: [24, 24], iconAnchor: [12, 12] }) })
+              .bindPopup(`<div style="font-size:12px"><strong>Alternate path start</strong><div>Follows the green diversion to bypass the affected area.</div></div>`)
+              .addTo(group)
+          }
         } catch (err) {
           // ignore path error
         }
@@ -260,6 +317,12 @@ export default function LeafletMap({
             className: 'route-flow-animation',
           })
             .bindTooltip(`✅ Divert to: ${plan.divert_to || 'Detour Path'}${routeSource}`, { sticky: true })
+            .on('click', (e) => {
+              L.popup({ maxWidth: 240 })
+                .setLatLng(e.latlng)
+                .setContent(`<div style="font-size:12px"><strong>Alternate route</strong><div>This route bypasses the affected area and reconnects to the network safely.</div></div>`)
+                .openOn(map)
+            })
             .addTo(group)
 
           // Detour/Arrow marker

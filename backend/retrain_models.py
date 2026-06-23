@@ -80,7 +80,7 @@ def main():
 
     feedback = load_feedback(fb_path)
     if not feedback:
-        print('No feedback found at', fb_path)
+        logger.info('No feedback found at %s', fb_path)
         return
 
     adjustments = compute_adjustments(feedback)
@@ -88,20 +88,20 @@ def main():
     new_weights = apply_adjustments(weights, adjustments)
     save_weights(weights_path, new_weights)
 
-    print('Applied adjustments:', adjustments)
-    print('New weights saved to', weights_path)
+    logger.info('Applied adjustments: %s', adjustments)
+    logger.info('New weights saved to %s', weights_path)
 
     # Optional: run auxiliary maintenance tasks: train duration classifier and run audits
     try:
         # run training script (does nothing if data missing)
         script = base / 'tools' / 'train_duration_classifier.py'
         if script.exists():
-            print('Running duration classifier training...')
+            logger.info('Running duration classifier training...')
             subprocess.check_call([sys.executable, str(script)])
 
         audit = base / 'tools' / 'audit_models.py'
         if audit.exists():
-            print('Running model leakage audit...')
+            logger.info('Running model leakage audit...')
             subprocess.check_call([sys.executable, str(audit)])
     except Exception as e:
         logger.warning(f'Post-retrain auxiliary scripts failed: {e}')

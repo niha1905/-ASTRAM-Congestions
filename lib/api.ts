@@ -7,12 +7,16 @@ import type {
   OperationsBrief,
   ScenarioResult,
 } from './types'
-import { NEWS_DEFAULT_LIMIT, REQUEST_TIMEOUT_MS } from './constants'
+import { DASHBOARD_TIMEOUT_MS, NEWS_DEFAULT_LIMIT, REQUEST_TIMEOUT_MS } from './constants'
 
-const DEFAULT_API_BASE_URL = process.env.NODE_ENV !== 'production' ? 'http://localhost:5000/api' : ''
+const DEFAULT_API_BASE_URL = process.env.NODE_ENV !== 'production' ? 'http://127.0.0.1:5000/api' : ''
 
 export function getBaseUrl(): string {
-  return process.env.NEXT_PUBLIC_API_BASE_URL?.trim() || DEFAULT_API_BASE_URL
+  const configuredBase = process.env.NEXT_PUBLIC_API_BASE_URL?.trim()
+  if (configuredBase && configuredBase.includes('127.0.0.1:8000')) {
+    return DEFAULT_API_BASE_URL
+  }
+  return (configuredBase || DEFAULT_API_BASE_URL).replace('127.0.0.1:8000', '127.0.0.1:5000')
 }
 
 function normalizeBaseUrl(base: string): string {
@@ -21,7 +25,11 @@ function normalizeBaseUrl(base: string): string {
   return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`
 }
 
-async function realFetch<T>(path: string, init?: RequestInit): Promise<T> {
+async function realFetch<T>(
+  path: string,
+  init?: RequestInit,
+  timeoutMs: number = REQUEST_TIMEOUT_MS,
+): Promise<T> {
   const base = normalizeBaseUrl(getBaseUrl())
   if (!base) {
     throw new Error(
@@ -31,7 +39,7 @@ async function realFetch<T>(path: string, init?: RequestInit): Promise<T> {
 
   const url = `${base}${path}`
   const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+  const timeout = setTimeout(() => controller.abort(), timeoutMs)
 
   try {
     const res = await fetch(url, {
@@ -50,7 +58,7 @@ async function realFetch<T>(path: string, init?: RequestInit): Promise<T> {
     const name = (error as any)?.name ?? ''
     if (name === 'AbortError') {
       throw new Error(
-        `Request to ${path} timed out after ${REQUEST_TIMEOUT_MS / 1000} seconds. Confirm the backend is running at ${base}.`
+        `Request to ${path} timed out after ${timeoutMs / 1000} seconds. Confirm the backend is running at ${base}.`
       )
     }
 
@@ -80,11 +88,15 @@ export const api = {
   },
 
   dashboard(): Promise<any> {
-    return realFetch<any>('/dashboard', { method: 'GET' })
+    return realFetch<any>('/dashboard', { method: 'GET' }, DASHBOARD_TIMEOUT_MS)
   },
 
   analyzeDashboard(events: any[]): Promise<any> {
-    return realFetch<any>('/dashboard', { method: 'POST', body: JSON.stringify({ events }) })
+    return realFetch<any>(
+      '/dashboard',
+      { method: 'POST', body: JSON.stringify({ events }) },
+      DASHBOARD_TIMEOUT_MS,
+    )
   },
 
   analyzeEvent(input: EventInput): Promise<AnalysisResult> {

@@ -12,7 +12,7 @@ export function ConnectionStatus() {
     api.health()
       .then((r) => {
         if (!active) return
-        if (r.status === 'ok') setState('live')
+        if (r.status === 'ok' || r.status === 'healthy') setState('live')
         else setState('down')
       })
       .catch(() => {

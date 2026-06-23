@@ -1,0 +1,544 @@
+﻿{
+    "count":  5,
+    "items":  [
+                  {
+                      "inferred":  {
+                                       "event_type":  "unplanned",
+                                       "hour":  5,
+                                       "matched_location":  null,
+                                       "priority":  "Medium",
+                                       "weekday":  2,
+                                       "zone":  "Bangalore"
+                                   },
+                      "news":  {
+                                   "link":  "https://news.google.com/rss/articles/CBMilgNBVV95cUxNZEdvbXk2VFNpenlDb2xjRjZyVEIzdnNYSGtFN3FuOF96em5CYy1xUVBneld2cXp2cE44TmV5TU5fMjFPeEV5WFN5akloWno4VV9PWVlvTFdxU1FfUHNhVFNnTEVZbklGdy0wWC1oNnFyXzhHVU9LRTVlM002bFZKSVJaS1k5R0hxWGsyTzlEMHR1R254LU03bHNCcU9ydWgwalNRNkZIeXBHYU1qRk9UcnZtcFl2RGVwaDRYVE40eV85MFBobmdmTWJHdVpwdFRTcG1BNGQwS0lyNUlzdkJYeG5kU25UZzZ2VTZUSlNtTVlTaHA1bGdVY19WLVRYRU5oVWxYSnEzM0RtTmo2SkJOREJiUnlUd0VfVkVyRkZJRjVuQ1M5S2tKOTNvZ0kyamF0SFpuT3dFWEFHZGhTdXl0dzRSYkNobzRwaWtXM29HOGdQaFRFc0tiMmw3SkFzaVRsQUdKRjVyZ3A4SnR2VWNRWEtKc1Azb2o4QjhPcWFVeUJqekVyVGxhUkJhM3VadV9wd0prTFNn?oc=5",
+                                   "location":  null,
+                                   "original_title":  "‘Are we nobody?’ Bengaluru man blocks governor’s convoy over traffic delay with pregnant wife in car | Viral video - MSN",
+                                   "published":  "2026-06-17T05:04:31+00:00",
+                                   "source":  "MSN",
+                                   "summary":  "[Vip Movement] Bangalore — HIGH severity",
+                                   "title":  "‘Are we nobody?’ Bengaluru man blocks governor’s convoy over traffic delay with pregnant wife in car | Viral video"
+                               },
+                      "position":  {
+                                       "lat":  12.9716,
+                                       "lon":  77.5946
+                                   },
+                      "pre_measures":  [
+                                           "Deploy additional traffic officers to nearby junctions"
+                                       ],
+                      "predictions":  {
+                                          "closure":  {
+                                                          "closure_probability":  36.8,
+                                                          "risk_level":  "low",
+                                                          "success":  true,
+                                                          "will_close":  false
+                                                      },
+                                          "impact":  {
+                                                         "impact_score":  0.0,
+                                                         "risk_level":  "low",
+                                                         "success":  true
+                                                     },
+                                          "resources":  {
+                                                            "barricades_needed":  21,
+                                                            "officers_needed":  21,
+                                                            "sources":  {
+                                                                            "barricades":  "model",
+                                                                            "officers":  "model"
+                                                                        },
+                                                            "success":  true,
+                                                            "total_resources":  42
+                                                        }
+                                      },
+                      "sentiment":  "neutral",
+                      "traffic_plan":  {
+                                           "affected":  "Main arterial road near Bangalore",
+                                           "destination":  [
+                                                               12.9496,
+                                                               77.6126
+                                                           ],
+                                           "diversion_path":  [
+                                                                  [
+                                                                      12.9716,
+                                                                      77.5946
+                                                                  ],
+                                                                  [
+                                                                      12.9816,
+                                                                      77.5866
+                                                                  ],
+                                                                  [
+                                                                      12.986600000000001,
+                                                                      77.5996
+                                                                  ],
+                                                                  [
+                                                                      12.9796,
+                                                                      77.6146
+                                                                  ],
+                                                                  [
+                                                                      12.9666,
+                                                                      77.6196
+                                                                  ],
+                                                                  [
+                                                                      12.9496,
+                                                                      77.6126
+                                                                  ]
+                                                              ],
+                                           "divert_to":  "Alternate corridor bypassing Bangalore",
+                                           "origin":  [
+                                                          12.9716,
+                                                          77.5946
+                                                      ],
+                                           "path":  [
+                                                        [
+                                                            12.9716,
+                                                            77.5946
+                                                        ],
+                                                        [
+                                                            12.963600000000001,
+                                                            77.6006
+                                                        ],
+                                                        [
+                                                            12.9566,
+                                                            77.6066
+                                                        ],
+                                                        [
+                                                            12.9496,
+                                                            77.6126
+                                                        ]
+                                                    ],
+                                           "source":  "offset_fallback"
+                                       }
+                  },
+                  {
+                      "inferred":  {
+                                       "event_type":  "unplanned",
+                                       "hour":  18,
+                                       "matched_location":  "whitefield",
+                                       "priority":  "High",
+                                       "weekday":  5,
+                                       "zone":  "Whitefield"
+                                   },
+                      "news":  {
+                                   "link":  "https://news.google.com/rss/articles/CBMi2wFBVV95cUxPek5nM25GTzVqM3B3NUZRejNJYjlOSkx6Y2sxMEdsRllTbDZTem1KbjJKSHJCVHpuVEd3eVpnSkRBUGpFMmJPOHQ1azF6YU8yWVpsQ2pwYWJ1Z0VrOUNzWWdoMUNYZWoxOEEyLWxnNE4yMndBNThOS1dYUGhBTjhheUpDUldnRGp5V2dzOExiX0pCbXpOYUV0R3VGcGxwYmhNR1RsT0w5Qmlsdy14LWx0eDd0ZFZkX203c0dFaGtmbUlISGVPT1ZiSEk2a3QxWHgwYkF5M3lrXzlLc03SAeIBQVVfeXFMTjFLYUVRcndmdWpzalV1UVVET2tndFFfVjdOWkJCcGhuNE10bHpDcElkeDJBVXMwZjVkYjFmSm9OYW1oc1JHR085N1RGNUh2NGp3VU5fTlVyNURnMmM5VWdTWmZsT05pQnFNcmZjc3lUeW1YV2JmdHh6R25MNS1leldNSXJ5TjFhQ2dkVDhoUVNhd18zSWxmY0U3eU02RlhLbEtERFM5Q2drVm1lUzJkcHJtZERtakN1NDhTSzUyc3NySEtHc3otV1BVUm42bzhnUVI1Y012RGNoaWE0dnFtZWxjQQ?oc=5",
+                                   "location":  "Whitefield - The Hindu",
+                                   "original_title":  "Evening showers leave Bengaluru flooded, trigger massive snarls at Whitefield - The Hindu",
+                                   "published":  "2026-06-20T18:04:58+00:00",
+                                   "source":  "The Hindu",
+                                   "summary":  "[Accident] Whitefield - The Hindu — HIGH severity",
+                                   "title":  "Evening showers leave Bengaluru flooded, trigger massive snarls at Whitefield"
+                               },
+                      "position":  {
+                                       "lat":  12.9699,
+                                       "lon":  77.749
+                                   },
+                      "pre_measures":  [
+                                           "Prepare road closure signage and barricades",
+                                           "Deploy additional traffic officers to nearby junctions"
+                                       ],
+                      "predictions":  {
+                                          "closure":  {
+                                                          "closure_probability":  56.7,
+                                                          "risk_level":  "medium",
+                                                          "success":  true,
+                                                          "will_close":  true
+                                                      },
+                                          "impact":  {
+                                                         "impact_score":  2.3,
+                                                         "risk_level":  "low",
+                                                         "success":  true
+                                                     },
+                                          "resources":  {
+                                                            "barricades_needed":  30,
+                                                            "officers_needed":  34,
+                                                            "sources":  {
+                                                                            "barricades":  "model",
+                                                                            "officers":  "model"
+                                                                        },
+                                                            "success":  true,
+                                                            "total_resources":  64
+                                                        }
+                                      },
+                      "sentiment":  "neutral",
+                      "traffic_plan":  {
+                                           "affected":  "Whitefield Main Road (IT Corridor)",
+                                           "destination":  [
+                                                               12.983,
+                                                               77.756
+                                                           ],
+                                           "diversion_path":  [
+                                                                  [
+                                                                      12.9699,
+                                                                      77.749
+                                                                  ],
+                                                                  [
+                                                                      12.9799,
+                                                                      77.741
+                                                                  ],
+                                                                  [
+                                                                      12.984900000000001,
+                                                                      77.75399999999999
+                                                                  ],
+                                                                  [
+                                                                      12.9779,
+                                                                      77.76899999999999
+                                                                  ],
+                                                                  [
+                                                                      12.9649,
+                                                                      77.774
+                                                                  ],
+                                                                  [
+                                                                      12.9479,
+                                                                      77.767
+                                                                  ]
+                                                              ],
+                                           "divert_to":  "ITPL Main Road \u0026 Varthur Road Bypass",
+                                           "origin":  [
+                                                          12.9699,
+                                                          77.749
+                                                      ],
+                                           "path":  [
+                                                        [
+                                                            12.9699,
+                                                            77.749
+                                                        ],
+                                                        [
+                                                            12.961900000000002,
+                                                            77.755
+                                                        ],
+                                                        [
+                                                            12.9549,
+                                                            77.761
+                                                        ],
+                                                        [
+                                                            12.9479,
+                                                            77.767
+                                                        ]
+                                                    ],
+                                           "source":  "offset_fallback"
+                                       }
+                  },
+                  {
+                      "inferred":  {
+                                       "event_type":  "unplanned",
+                                       "hour":  22,
+                                       "matched_location":  null,
+                                       "priority":  "Medium",
+                                       "weekday":  5,
+                                       "zone":  "Bangalore"
+                                   },
+                      "news":  {
+                                   "link":  "https://news.google.com/rss/articles/CBMisAFBVV95cUxNTFpiVnEtODNpd3VfWncwUVloZDl0MXlmeWJ2S3pkV0ExVDlpdmxaU3h4cFlvSFpYa0N0MXZSd19SS3Q0YkRlUUhTZFRQVklFb0ZIQ2RuQkgwUEVqcktVTlRJMkFlQzQzRVFKTDJPUTkxWXdKeWdod1VIZDVYc2NJOC02SGVyX3lTeEJ5YkpHZTRteTNvXzFpSUNNMHdQaW1KelFXQmpxNE5lcm81YlVhUQ?oc=5",
+                                   "location":  null,
+                                   "original_title":  "Bengaluru: Flooded roads paralyse the IT corridor - Deccan Herald",
+                                   "published":  "2026-06-20T22:49:35+00:00",
+                                   "source":  "Deccan Herald",
+                                   "summary":  "[Flood] Bangalore — HIGH severity",
+                                   "title":  "Bengaluru: Flooded roads paralyse the IT corridor"
+                               },
+                      "position":  {
+                                       "lat":  12.9716,
+                                       "lon":  77.5946
+                                   },
+                      "pre_measures":  [
+                                           "Prepare road closure signage and barricades",
+                                           "Deploy additional traffic officers to nearby junctions"
+                                       ],
+                      "predictions":  {
+                                          "closure":  {
+                                                          "closure_probability":  56.1,
+                                                          "risk_level":  "medium",
+                                                          "success":  true,
+                                                          "will_close":  true
+                                                      },
+                                          "impact":  {
+                                                         "impact_score":  7.2,
+                                                         "risk_level":  "low",
+                                                         "success":  true
+                                                     },
+                                          "resources":  {
+                                                            "barricades_needed":  21,
+                                                            "officers_needed":  21,
+                                                            "sources":  {
+                                                                            "barricades":  "model",
+                                                                            "officers":  "model"
+                                                                        },
+                                                            "success":  true,
+                                                            "total_resources":  42
+                                                        }
+                                      },
+                      "sentiment":  "neutral",
+                      "traffic_plan":  {
+                                           "affected":  "Main arterial road near Bangalore",
+                                           "destination":  [
+                                                               12.9496,
+                                                               77.6126
+                                                           ],
+                                           "diversion_path":  [
+                                                                  [
+                                                                      12.9716,
+                                                                      77.5946
+                                                                  ],
+                                                                  [
+                                                                      12.9816,
+                                                                      77.5866
+                                                                  ],
+                                                                  [
+                                                                      12.986600000000001,
+                                                                      77.5996
+                                                                  ],
+                                                                  [
+                                                                      12.9796,
+                                                                      77.6146
+                                                                  ],
+                                                                  [
+                                                                      12.9666,
+                                                                      77.6196
+                                                                  ],
+                                                                  [
+                                                                      12.9496,
+                                                                      77.6126
+                                                                  ]
+                                                              ],
+                                           "divert_to":  "Alternate corridor bypassing Bangalore",
+                                           "origin":  [
+                                                          12.9716,
+                                                          77.5946
+                                                      ],
+                                           "path":  [
+                                                        [
+                                                            12.9716,
+                                                            77.5946
+                                                        ],
+                                                        [
+                                                            12.963600000000001,
+                                                            77.6006
+                                                        ],
+                                                        [
+                                                            12.9566,
+                                                            77.6066
+                                                        ],
+                                                        [
+                                                            12.9496,
+                                                            77.6126
+                                                        ]
+                                                    ],
+                                           "source":  "offset_fallback"
+                                       }
+                  },
+                  {
+                      "inferred":  {
+                                       "event_type":  "unplanned",
+                                       "hour":  6,
+                                       "matched_location":  null,
+                                       "priority":  "Medium",
+                                       "weekday":  6,
+                                       "zone":  "Bangalore"
+                                   },
+                      "news":  {
+                                   "link":  "https://news.google.com/rss/articles/CBMinAFBVV95cUxNYi1uYkxvSTJ5TEs5Q2JDcHhFZWVBZmJkZ3VQV3ZKa3FQV1p0bnR4Q3NWdldMd19neGFjd01EaWdieVROS0NNMEtsR2pIeFktT1RHSDdkWC1KUUNDS0hIQlpnR0JTeDBoTVIyVnZEVDQydE5fS3g4aXFPRDltSGhBM2xnNjhTenJqLUZrejQwbE1jMU1TM3k1RFc5bGE?oc=5",
+                                   "location":  null,
+                                   "original_title":  "Three women killed and eight injured in Bengaluru road accident - The News Mill",
+                                   "published":  "2026-06-21T06:22:08+00:00",
+                                   "source":  "The News Mill",
+                                   "summary":  "[Accident] Bangalore — HIGH severity",
+                                   "title":  "Three women killed and eight injured in Bengaluru road accident"
+                               },
+                      "position":  {
+                                       "lat":  12.9716,
+                                       "lon":  77.5946
+                                   },
+                      "pre_measures":  [
+                                           "Deploy additional traffic officers to nearby junctions",
+                                           "Monitor crowd and emergency services readiness"
+                                       ],
+                      "predictions":  {
+                                          "closure":  {
+                                                          "closure_probability":  35.0,
+                                                          "risk_level":  "low",
+                                                          "success":  true,
+                                                          "will_close":  false
+                                                      },
+                                          "impact":  {
+                                                         "impact_score":  1.6,
+                                                         "risk_level":  "low",
+                                                         "success":  true
+                                                     },
+                                          "resources":  {
+                                                            "barricades_needed":  21,
+                                                            "officers_needed":  21,
+                                                            "sources":  {
+                                                                            "barricades":  "model",
+                                                                            "officers":  "model"
+                                                                        },
+                                                            "success":  true,
+                                                            "total_resources":  42
+                                                        }
+                                      },
+                      "sentiment":  "negative",
+                      "traffic_plan":  {
+                                           "affected":  "Main arterial road near Bangalore",
+                                           "destination":  [
+                                                               12.9496,
+                                                               77.6126
+                                                           ],
+                                           "diversion_path":  [
+                                                                  [
+                                                                      12.9716,
+                                                                      77.5946
+                                                                  ],
+                                                                  [
+                                                                      12.9816,
+                                                                      77.5866
+                                                                  ],
+                                                                  [
+                                                                      12.986600000000001,
+                                                                      77.5996
+                                                                  ],
+                                                                  [
+                                                                      12.9796,
+                                                                      77.6146
+                                                                  ],
+                                                                  [
+                                                                      12.9666,
+                                                                      77.6196
+                                                                  ],
+                                                                  [
+                                                                      12.9496,
+                                                                      77.6126
+                                                                  ]
+                                                              ],
+                                           "divert_to":  "Alternate corridor bypassing Bangalore",
+                                           "origin":  [
+                                                          12.9716,
+                                                          77.5946
+                                                      ],
+                                           "path":  [
+                                                        [
+                                                            12.9716,
+                                                            77.5946
+                                                        ],
+                                                        [
+                                                            12.963600000000001,
+                                                            77.6006
+                                                        ],
+                                                        [
+                                                            12.9566,
+                                                            77.6066
+                                                        ],
+                                                        [
+                                                            12.9496,
+                                                            77.6126
+                                                        ]
+                                                    ],
+                                           "source":  "offset_fallback"
+                                       }
+                  },
+                  {
+                      "inferred":  {
+                                       "event_type":  "planned",
+                                       "hour":  11,
+                                       "matched_location":  null,
+                                       "priority":  "Medium",
+                                       "weekday":  4,
+                                       "zone":  "Bangalore"
+                                   },
+                      "news":  {
+                                   "link":  "https://news.google.com/rss/articles/CBMi3gFBVV95cUxQTTc3UUVPWWVkamRzQXVMUm9xR3BwVnczcWpKMEdkRVdMcms5TDlsQTVIc0tWYXJ1eE1IcS1rV1M1TzlrT2YwRms0ckRVdG9xTzlLY2FHdUpMdUZIX0VUREd1TUtEY21TNTBXampaY0Vvdzd5WTNxbGdwVXRCc1dBQVZCOUN5WXp5U0w1Y1hoZTVMVldCd0hkZnB6Q3B3TnVObUlVQU5vQ082YlVtcmc0TS0xODYxbEhxSFMwTU80bWcwTVRPQ0gwWndkYjNBbEp2MXEwQk54TzBMVWM3S2fSAeQBQVVfeXFMTmFvbjVONTVfNElUUko5ZG1OVW9vMHlGS2FYWWZNZjVjUU8wbWtleVRqVVE3aDdURXItbjJmZGVibkxHSmhLSFJiR09zaEZybDJpbUMyU2dHaXlSMEhDOHZVX2pkaDZnMzJjYUJKXy1aam0waXR4TUtOZnNQSUFTdVV4TzJ0MEQwWTI1NVdGZ2Rrd0I5Vll4bW45d01lTkkxNTRZTjhRVGFLeG1MNlRaTHpiS0F6V1ktS2wtY0QwUUNjMjNHSFM2RU04ZExYNzgwYjljMW40bGdoQzEzNzY3TnUxclF2?oc=5",
+                                   "location":  null,
+                                   "original_title":  "Bengaluru neighborhoods play host to a hop-oh hop-off bus concert - The Hindu",
+                                   "published":  "2026-06-19T11:53:38+00:00",
+                                   "source":  "The Hindu",
+                                   "summary":  "[Cultural Event] Bangalore — MEDIUM severity",
+                                   "title":  "Bengaluru neighborhoods play host to a hop-oh hop-off bus concert"
+                               },
+                      "position":  {
+                                       "lat":  12.9716,
+                                       "lon":  77.5946
+                                   },
+                      "pre_measures":  [
+                                           "Prepare road closure signage and barricades",
+                                           "Deploy additional traffic officers to nearby junctions"
+                                       ],
+                      "predictions":  {
+                                          "closure":  {
+                                                          "closure_probability":  60.0,
+                                                          "risk_level":  "medium",
+                                                          "success":  true,
+                                                          "will_close":  true
+                                                      },
+                                          "impact":  {
+                                                         "impact_score":  5.9,
+                                                         "risk_level":  "low",
+                                                         "success":  true
+                                                     },
+                                          "resources":  {
+                                                            "barricades_needed":  27,
+                                                            "officers_needed":  24,
+                                                            "sources":  {
+                                                                            "barricades":  "model",
+                                                                            "officers":  "model"
+                                                                        },
+                                                            "success":  true,
+                                                            "total_resources":  51
+                                                        }
+                                      },
+                      "sentiment":  "neutral",
+                      "traffic_plan":  {
+                                           "affected":  "Main arterial road near Bangalore",
+                                           "destination":  [
+                                                               12.9496,
+                                                               77.6126
+                                                           ],
+                                           "diversion_path":  [
+                                                                  [
+                                                                      12.9716,
+                                                                      77.5946
+                                                                  ],
+                                                                  [
+                                                                      12.9816,
+                                                                      77.5866
+                                                                  ],
+                                                                  [
+                                                                      12.986600000000001,
+                                                                      77.5996
+                                                                  ],
+                                                                  [
+                                                                      12.9796,
+                                                                      77.6146
+                                                                  ],
+                                                                  [
+                                                                      12.9666,
+                                                                      77.6196
+                                                                  ],
+                                                                  [
+                                                                      12.9496,
+                                                                      77.6126
+                                                                  ]
+                                                              ],
+                                           "divert_to":  "Alternate corridor bypassing Bangalore",
+                                           "origin":  [
+                                                          12.9716,
+                                                          77.5946
+                                                      ],
+                                           "path":  [
+                                                        [
+                                                            12.9716,
+                                                            77.5946
+                                                        ],
+                                                        [
+                                                            12.963600000000001,
+                                                            77.6006
+                                                        ],
+                                                        [
+                                                            12.9566,
+                                                            77.6066
+                                                        ],
+                                                        [
+                                                            12.9496,
+                                                            77.6126
+                                                        ]
+                                                    ],
+                                           "source":  "offset_fallback"
+                                       }
+                  }
+              ]
+}

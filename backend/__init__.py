@@ -14,9 +14,12 @@ from .routes.health import health_bp
 from .routes.predictions import predictions_bp
 from .routes.dashboard import dashboard_bp
 from .routes.news import news_bp
+from .routes.mappls import mappls_bp
 
 # Load environment variables
-load_dotenv()
+project_root = Path(__file__).resolve().parent.parent
+load_dotenv(project_root / '.env')
+load_dotenv(project_root / '.env.local', override=True)
 
 
 def create_app(config_name: str = None) -> Flask:
@@ -53,6 +56,7 @@ def create_app(config_name: str = None) -> Flask:
     app.register_blueprint(predictions_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(news_bp)
+    app.register_blueprint(mappls_bp)
     
     # Error handlers
     @app.errorhandler(404)
