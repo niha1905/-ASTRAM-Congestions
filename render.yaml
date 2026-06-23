@@ -1,5 +1,4 @@
 version: "1"
-
 services:
   - type: web
     name: astram-frontend
