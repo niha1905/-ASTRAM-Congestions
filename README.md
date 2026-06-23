@@ -1,145 +1,198 @@
-# ASTRAM CongestionIQ 🚦
-> **Real-Time Event-Driven Traffic Intelligence & Operational Mitigation Platform**
-> *Developed for the Flipkart Gridlock Hackathon 2.0 (Round 2)*
+# ASTRAM CongestionIQ — Detailed Project README
 
-ASTRAM CongestionIQ is an advanced traffic management and planning platform designed to forecast, quantify, and mitigate traffic bottlenecks caused by localized events (such as festivals, protests, sudden VIP movements, and construction). 
+One-line summary: Real-time event-driven traffic intelligence platform that ingests news and operational signals, predicts local traffic impact using an ensemble of ML models and graph algorithms, and produces actionable resource and routing recommendations for operators.
 
-By combining real-time news ingestion with a cascade of 10 specialized Machine Learning models and heuristics, ASTRAM predicts event-related traffic impact and outputs actionable recommendations for manpower (traffic officer deployment), barricading, and diversion routing.
+This README is written to support hackathon judging, developer onboarding, local development, and deployment to Render.
 
----
-
-## 🏗️ System Architecture
-
-```mermaid
-graph TD
-    A[Real-Time News Ingestion: Google News RSS] -->|Text Extraction & Keyword Matching| B(Locality & Event Type Classifier)
-    B -->|Categorical Inputs & Spatial Coordinates| C{ASTRAM Predictive ML Engine}
-    
-    subgraph ML Models
-        C -->|LightGBM| M1[Incident Volume Forecaster]
-        C -->|Random Forest| M2[Road Closure Predictor]
-        C -->|Gradient Boosting| M3[Officer Deployment]
-        C -->|Gradient Boosting| M4[Barricade Deployment]
-        C -->|LightGBM| M5[Hotspot Risk Predictor]
-        C -->|LightGBM| M6[Incident Duration Predictor]
-        C -->|LightGBM| M7[Event Impact Score]
-        C -->|Markov Chain| M8[Congestion Cascade Probabilities]
-        C -->|Random Forest| M9[Parking Overflow Predictor]
-        C -->|Dijkstra Graph| M10[Green Corridor Pathfinder]
-    end
-
-    M1 & M2 & M3 & M4 & M5 & M6 & M7 & M8 & M9 & M10 -->|JSON API Payload| D[Flask Blueprint API]
-    D -->|Real-Time State Synchronization| E[Next.js Dashboard UI]
-    
-    subgraph UI Control Center
-        E --> Map[Interactive Leaflet Spatial Map]
-        E --> Cascade[Cascade Studio & Bypasses]
-        E --> Scenario[What-If Scenario Engine]
-        E --> Brief[Operations Brief Generator]
-    end
-```
+**Contents:**
+- Project overview
+- Architecture & data flow
+- Component responsibilities and key files
+- Local development & deployment (Render)
+- ML model summary and retraining workflow
+- Demo script and hackathon talking points
+- Candidate files for removal (needs confirmation)
 
 ---
 
-## 🌟 Key Features
+## 1. Project Overview
 
-1. **Real-Time Ingestion & Extraction:** Periodically scrapes Google News RSS feeds to identify ongoing and upcoming localized events in Bangalore, categorizing priority and matching them to exact geo-coordinates.
-2. **Quantified Event Impact:** Leverages ML models to predict event duration, hotspot risk, and a composite Event Impact Score in advance of gridlocks.
-3. **Dynamic Resource Deployment:** Recommends exact officer counts and barricade placements based on predicted closure probability and priority level.
-4. **Congestion Cascade Studio:** Uses Markov Chains to simulate the propagation of traffic congestion to adjacent corridors over 30 and 60 minutes.
-5. **Emergency Green Corridor Pathfinder:** Finds optimal signal override paths and bypasses using Dijkstra's algorithm mapped over historical road criticalities.
-6. **What-If Scenario Engine:** Allows operators to apply simulated perturbations (e.g. heavy rain, metro breakdown, +20k visitors, VIP movements) and instantly view adjusted resource requirements.
+ASTRAM ingests public news sources, extracts event metadata (type, time window, location), maps events to a road network, and runs a suite of models to estimate incident counts, closure probabilities, hotspot risk, and recommended operational responses (officer counts, barricade placements, diversion routes). The system is designed for low-latency inference and operator-facing decision support.
 
----
-
-## 🛠️ Project Structure
-
-```
-├── app/                      # Next.js App Router (pages & routing)
-├── backend/                  # Flask Backend Services
-│   ├── models/               # ML Predictors, model loaders & inference functions
-│   ├── routes/               # API blueprints (dashboard, news, predictions)
-│   ├── scrapers/             # RSS parser & Google News scraping services
-│   ├── config.py             # Location mappings & system-wide constants
-│   └── requirements.txt      # Python dependencies
-├── components/               # React UI Components (maps, charts, KPI widgets)
-├── trained_models/           # Serialized joblib models (.pkl) & encoders
-├── ASTRAM_CongestionIQ_ML.ipynb # Jupyter notebook for model training
-└── package.json              # Frontend package manager config
-```
+Primary goals for the hackathon:
+- Demonstrate end-to-end ingestion → prediction → operator recommendation pipeline
+- Show interactive scenarios via the web dashboard and the Cascade Studio
+- Highlight ML performance and explainability for key recommendations
 
 ---
 
-## 🚀 Setup & Execution Instructions
+## 2. Architecture & Data Flow
 
-Follow these steps to run both the frontend and backend servers locally.
+High-level flow:
+- News Scraper (backend.scrapers.news_scraper.py) pulls RSS/news feeds and emits parsed event records.
+- Event Normalization maps unstructured text to structured fields (type, time, approximate location).
+- Geo-mapping converts place mentions to lat/lon and snaps them to the operational corridor map.
+- ML Inference: the `backend/models` modules load serialized models and run predictions; outputs are normalized into a single JSON API shape.
+- Routing: `backend/mappls_client.py` integrates Mappls APIs for route geometry and distance/duration estimates used in routing and corridor impact scoring.
+- Frontend Dashboard (Next.js) polls the API and provides interactive visualizations and controls.
 
-### 1. Prerequisite Environments
-- **Node.js:** v18.x or above
-- **Python:** v3.9.x - v3.11.x
+Key endpoints (backend/routes):
+- `GET /api/health` — health check
+- `GET /api/news` — recent parsed events
+- `POST /api/predict` — run predictions for a given event (used by UI)
+- `GET /api/mappls/token` — returns Mappls access token when needed by the frontend
+
+Map services:
+- Uses Mappls (MapmyIndia) routing and tiles. The backend prefers a REST/SDK key when available, falling back to OAuth client-credentials. See `backend/mappls_client.py` for token handling and polyline decoding.
 
 ---
 
-### 2. Backend Setup (Flask API)
-Navigate to the `backend/` directory, set up a virtual environment, and start the development server.
+## 3. Component Responsibilities & Key Files
 
-```bash
-# Navigate to the backend
+- Frontend (Next.js app/):
+    - `app/(app)/page.tsx` — main dashboard shell
+    - `components/map/*` — map components and Mappls integration
+    - `components/operations-suite/*` — operational views (briefs, scenario simulator)
+
+- Backend (Flask backend/):
+    - `backend/routes/*` — API blueprints
+    - `backend/models/*` — model loaders and predictor wrappers
+    - `backend/mappls_client.py` — routing helpers, polyline decoding, OAuth handling
+    - `backend/retrain_models.py` — training orchestration and model dumps
+
+- Models & Data:
+    - `trained_models/` — serialized model artifacts (do not delete without archiving)
+    - `components.json` — UI layout / component metadata used by the frontend
+
+---
+
+## 4. Local Development
+
+Prereqs:
+- NodeJS 18+ (pnpm or npm/yarn supported; repo includes `pnpm-lock.yaml`)
+- Python 3.9–3.11
+
+Backend (developer mode):
+
+1. Create and activate a Python virtualenv in `backend/`:
+
+```powershell
 cd backend
-
-# Create a virtual environment
 python -m venv .venv
-
-# Activate virtual environment
-# On Windows (PowerShell):
 .venv\Scripts\Activate.ps1
-# On Linux / macOS:
-source .venv/bin/activate
-
-# Install required packages
 pip install -r requirements.txt
-
-# Start the Flask backend server (Runs on port 5000)
-python -m flask --app __init__ run --port=5000
 ```
 
-*Note: Ensure your virtual environment is active during execution.*
+2. Run the Flask backend (development):
 
----
+```powershell
+# from backend/
+$env:FLASK_APP = 'backend'
+$env:FLASK_ENV = 'development'
+python -m flask run --port 5000
+```
 
-### 3. Frontend Setup (Next.js Application)
-Navigate to the project root directory, install dependencies, and run the Next.js development server.
+Frontend (developer mode):
 
 ```bash
-# Return to the project root
-cd ..
-
-# Install NPM dependencies
-npm install
-
-# Start the Next.js dev server (Runs on port 3000)
-npm run dev
+# from project root
+pnpm install
+pnpm dev
+# or npm install && npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser to view the interactive dashboard.
+Set environment variables in a `.env` file in the repo root (example below). The frontend uses `NEXT_PUBLIC_API_BASE_URL` to call the backend.
+
+Environment example (repo root `.env`):
+
+```env
+MAPPLS_CLIENT_ID=
+MAPPLS_CLIENT_SECRET=
+MAPPLS_REST_API_KEY=
+NEXT_PUBLIC_MAPPLS_REST_API_KEY=
+NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:5000/api
+```
 
 ---
 
-## 📊 Machine Learning Model Details
+## 5. Deployment (Render.com)
 
-| Model Name | Type | Target | Performance |
-| :--- | :--- | :--- | :--- |
-| **Incident Volume** | LightGBM | Number of concurrent incidents | R²: 0.84 |
-| **Road Closure** | Random Forest | Binary probability of closure | Accuracy: 91.2% |
-| **Officer Deployment** | Gradient Boosting | Count of traffic officers needed | MAE: 1.2 |
-| **Barricade Deployment** | Gradient Boosting | Barricade units to deploy | MAE: 1.8 |
-| **Hotspot Risk** | LightGBM | Junction risk score (0-100) | R²: 0.89 |
-| **Event Impact** | LightGBM | Composite impact index | R²: 0.99 (High Fit) |
-| **Congestion Cascade** | Markov Chain | Risk spread probability | Mean Prob: 27%-41% |
-| **Parking Overflow** | Random Forest | Parking risk indicator | Accuracy: 97.7% |
-| **Green Corridor** | Dijkstra Graph | Shortest path route search | 22 nodes, 462 edges |
+We include a `render.yaml` manifest to deploy the frontend and backend as separate services. The manifest sets build/start commands and placeholder env vars used for production. See [render.yaml](render.yaml) for the canonical manifest used during the hackathon demo.
+
+Basic Render steps summary:
+1. Create a new Render service from the repo and import the `render.yaml` (Render will create two services: frontend and backend).
+2. Set required environment variables in Render dashboard (Mappls keys, CORS_ORIGINS, etc.).
+3. Deploy; both services will auto-deploy on git commit.
 
 ---
 
-## 📝 License
-This project is open-source under the MIT License. Developed for educational and hackathon evaluation purposes.
+## 6. ML Models & Retraining
+
+Where models live:
+- `trained_models/` contains saved model artifacts and JSON metadata.
+
+Training workflow (high level):
+1. Prepare training CSVs via `backend/tools/*` or Jupyter notebooks.
+2. Run `backend/retrain_models.py` which trains and writes joblib outputs to `trained_models/`.
+3. Commit model metadata (not large binary files) and consider storing actual model binaries in an object store if collaborating.
+
+Notes on reproducibility:
+- Use pinned package versions in `backend/requirements.txt`.
+- Tests and manual validation notebooks are in the repo; include model metrics in `docs/MODELS_README.md`.
+
+---
+
+## 7. Demo Script & Hackathon Talking Points (Step-by-step)
+
+Demo duration: ~6–8 minutes
+
+1. Elevator pitch (30s): explain problem, dataset, and what ASTRAM produces.
+2. Live demo (3–4 min):
+     - Show the dashboard and a current event from `GET /api/news`.
+     - Run a scenario: open Cascade Studio, apply a +20k visitors perturbation, and show impact scores and recommended officer deployment.
+     - Trigger a route calculation: demonstrate Mappls-backed route geometry (via `fetch_mappls_route`) and show suggested diversions.
+3. ML explanation (1–2 min): briefly describe top-performing models, key features, and model validation metrics.
+4. Operational value & next steps (30s): mention integration with city operations, adaptor for live sensor feeds, and improvements (real-time telemetry, privacy-safe telemetry storage).
+
+Suggested slides and talking bullets:
+- Problem statement + city impact
+- Data sources and ETL pipeline
+- ML ensemble architecture + metrics
+- Live demo + UI walkthrough
+- Limitations and future work
+
+---
+
+## 8. Candidate Files For Removal (please confirm before I delete)
+
+I recommend we do NOT automatically delete anything without your confirmation. Below are files I think are likely unnecessary, large, or duplicates. Confirm which you want removed and I will delete them and update `.gitignore` as needed.
+
+- `Astram event data_anonymized - Astram event data_anonymizedb40ac87.csv` — looks like a duplicate/accidental export (likely large). Candidate for removal or moving to `archive/`.
+- `ASTRAM_CongestionIQ_ML_SUBMISSION.ipynb` — if this is a submission notebook duplicate, consider archiving or removing.
+- Any large artifacts accidentally checked in (e.g., big model binaries inside source folders). Leave `trained_models/` only after confirmation.
+
+To remove a file locally (example):
+
+```powershell
+# from repo root
+Remove-Item "Astram event data_anonymized - Astram event data_anonymizedb40ac87.csv"
+# or move to archive
+Move-Item "Astram event data_anonymized - Astram event data_anonymizedb40ac87.csv" archive\
+```
+
+---
+
+## 9. Troubleshooting
+
+- Mappls errors: ensure `MAPPLS_REST_API_KEY` or `MAPPLS_CLIENT_*` env vars are set; check `backend/mappls_client.py` logs.
+- Model import issues: ensure `trained_models/` contains required artifacts and `requirements.txt` dependencies match the training environment.
+
+---
+
+## 10. Next Steps I can take for you
+
+- Apply the file deletions you confirm and update `.gitignore`.
+- Add a short `DEMO.md` with the exact commands and screenshots for judges.
+- Create a minimal `presentation/` slide deck with the architecture mermaid diagram.
+
+If you want me to delete the candidate files above, reply which ones to remove and I will perform the deletions.
