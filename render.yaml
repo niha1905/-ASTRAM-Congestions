@@ -1,4 +1,5 @@
 version: "1"
+
 services:
   - type: web
     name: astram-frontend
@@ -8,18 +9,20 @@ services:
     buildCommand: npm install && npm run build
     startCommand: npm run start
     autoDeployTrigger: commit
+
     envVars:
       - key: NODE_ENV
         value: production
-        sync: false
+
       - key: NEXT_PUBLIC_API_BASE_URL
         value: ""
-        sync: false
+
       - key: NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
         sync: false
+
       - key: NEXT_PUBLIC_MAPPLS_REST_API_KEY
         value: ""
-        sync: false
+
       - key: GOOGLE_MAPS_SERVER_API_KEY
         sync: false
 
@@ -31,43 +34,31 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn backend.wsgi:app --bind 0.0.0.0:$PORT --workers 2
     autoDeployTrigger: commit
+
     envVars:
       - key: CORS_ORIGINS
         value: ""
-        sync: false
+
       - key: MAPPLS_REST_API_KEY
         value: ""
-        sync: false
+
       - key: MAPPLS_WEB_SDK_KEY
         sync: false
+
       - key: MAPPLS_CLIENT_ID
         sync: false
+
       - key: MAPPLS_CLIENT_SECRET
         sync: false
+
       - key: FLASK_APP
         value: backend
-        sync: false
+
       - key: FLASK_ENV
         value: production
-        sync: false
+
       - key: FLASK_HOST
         value: 0.0.0.0
-        sync: false
+
       - key: FLASK_PORT
         value: ""
-        sync: false
-  - type: cron
-    name: news-scraper-scheduled
-    runtime: python
-    plan: free
-    rootDir: backend
-    buildCommand: pip install -r requirements.txt
-    startCommand: python -m backend.scrapers.news_scraper
-    schedule: "0 */1 * * *" # run hourly to refresh feeds (customize as needed)
-    envVars:
-      - key: MAPPLS_CLIENT_ID
-        sync: false
-      - key: MAPPLS_CLIENT_SECRET
-        sync: false
-      - key: MAPPLS_REST_API_KEY
-        sync: false
