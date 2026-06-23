@@ -13,9 +13,12 @@ services:
         value: production
         sync: false
       - key: NEXT_PUBLIC_API_BASE_URL
-        value: https://astram-backend.onrender.com
+        value: ""
         sync: false
       - key: NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+        sync: false
+      - key: NEXT_PUBLIC_MAPPLS_REST_API_KEY
+        value: ""
         sync: false
       - key: GOOGLE_MAPS_SERVER_API_KEY
         sync: false
@@ -30,10 +33,16 @@ services:
     autoDeployTrigger: commit
     envVars:
       - key: CORS_ORIGINS
-        value: https://astram-frontend.onrender.com
+        value: ""
         sync: false
       - key: MAPPLS_REST_API_KEY
-        value: "<SET_IN_RENDER_DASHBOARD>"
+        value: ""
+        sync: false
+      - key: MAPPLS_WEB_SDK_KEY
+        sync: false
+      - key: MAPPLS_CLIENT_ID
+        sync: false
+      - key: MAPPLS_CLIENT_SECRET
         sync: false
       - key: FLASK_APP
         value: backend
@@ -45,5 +54,20 @@ services:
         value: 0.0.0.0
         sync: false
       - key: FLASK_PORT
-        value: "5000"
+        value: ""
+        sync: false
+  - type: cron
+    name: news-scraper-scheduled
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m backend.scrapers.news_scraper
+    schedule: "0 */1 * * *" # run hourly to refresh feeds (customize as needed)
+    envVars:
+      - key: MAPPLS_CLIENT_ID
+        sync: false
+      - key: MAPPLS_CLIENT_SECRET
+        sync: false
+      - key: MAPPLS_REST_API_KEY
         sync: false
