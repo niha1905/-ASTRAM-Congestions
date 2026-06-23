@@ -4,9 +4,9 @@ ASTRAM is an AI-powered traffic intelligence platform that converts real-time ne
 
 # ASTRAM CongestionIQ — Detailed Project README
 
-One-line summary: Real-time event-driven traffic intelligence platform that ingests news and operational signals, predicts local traffic impact using an ensemble of ML models and graph algorithms, and produces actionable resource and routing recommendations for operators.
+ Real-time event-driven traffic intelligence platform that ingests news and operational signals, predicts local traffic impact using an ensemble of ML models and graph algorithms, and produces actionable resource and routing recommendations for operators.
 
-This README is written to support hackathon judging, developer onboarding, local development, and deployment to Render.
+
 
 **Contents:**
 - Project overview
