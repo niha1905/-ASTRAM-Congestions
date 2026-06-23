@@ -1,202 +1,283 @@
-# ASTRAM CongestionIQ🚦 Predict traffic disruptions before they happen
+# ASTRAM CongestionIQ
 
-ASTRAM is an AI-powered traffic intelligence platform that converts real-time news events into congestion forecasts, road closure predictions, diversion routes, and operational deployment recommendations for city traffic management teams.
+**Predict Traffic Disruptions Before They Happen**
 
-# ASTRAM CongestionIQ — Detailed Project README
-
- Real-time event-driven traffic intelligence platform that ingests news and operational signals, predicts local traffic impact using an ensemble of ML models and graph algorithms, and produces actionable resource and routing recommendations for operators.
-
-
-
-**Contents:**
-- Project overview
-- Architecture & data flow
-- Component responsibilities and key files
-- Local development & deployment (Render)
-- ML model summary and retraining workflow
-- Demo script and hackathon talking points
-- Candidate files for removal (needs confirmation)
+ASTRAM CongestionIQ is an AI-powered traffic intelligence platform that transforms real-world events into actionable traffic operations insights. Instead of reacting to congestion after it occurs, ASTRAM predicts disruptions in advance using news intelligence, geospatial analysis, and machine learning.
 
 ---
 
-## 1. Project Overview
+## Problem Statement
 
-ASTRAM ingests public news sources, extracts event metadata (type, time window, location), maps events to a road network, and runs a suite of models to estimate incident counts, closure probabilities, hotspot risk, and recommended operational responses (officer counts, barricade placements, diversion routes). The system is designed for low-latency inference and operator-facing decision support.
+Modern traffic management systems are largely reactive:
 
-Primary goals for the hackathon:
-- Demonstrate end-to-end ingestion → prediction → operator recommendation pipeline
-- Show interactive scenarios via the web dashboard and the Cascade Studio
-- Highlight ML performance and explainability for key recommendations
-
----
-
-## 2. Architecture & Data Flow
-
-High-level flow:
-- News Scraper (backend.scrapers.news_scraper.py) pulls RSS/news feeds and emits parsed event records.
-- Event Normalization maps unstructured text to structured fields (type, time, approximate location).
-- Geo-mapping converts place mentions to lat/lon and snaps them to the operational corridor map.
-- ML Inference: the `backend/models` modules load serialized models and run predictions; outputs are normalized into a single JSON API shape.
-- Routing: `backend/mappls_client.py` integrates Mappls APIs for route geometry and distance/duration estimates used in routing and corridor impact scoring.
-- Frontend Dashboard (Next.js) polls the API and provides interactive visualizations and controls.
-
-Key endpoints (backend/routes):
-- `GET /api/health` — health check
-- `GET /api/news` — recent parsed events
-- `POST /api/predict` — run predictions for a given event (used by UI)
-- `GET /api/mappls/token` — returns Mappls access token when needed by the frontend
-
-Map services:
-- Uses Mappls (MapmyIndia) routing and tiles. The backend prefers a REST/SDK key when available, falling back to OAuth client-credentials. See `backend/mappls_client.py` for token handling and polyline decoding.
+* Congestion is addressed only after it occurs.
+* News events, accidents, protests, and public gatherings are not integrated into traffic operations.
+* Resource deployment such as officers and barricades is inefficient without predictive intelligence.
+* Traffic teams lack a unified platform to anticipate and mitigate disruptions.
 
 ---
 
-## 3. Component Responsibilities & Key Files
+## Solution
 
-- Frontend (Next.js app/):
-    - `app/(app)/page.tsx` — main dashboard shell
-    - `components/map/*` — map components and Mappls integration
-    - `components/operations-suite/*` — operational views (briefs, scenario simulator)
+ASTRAM CongestionIQ provides an end-to-end predictive traffic intelligence pipeline:
 
-- Backend (Flask backend/):
-    - `backend/routes/*` — API blueprints
-    - `backend/models/*` — model loaders and predictor wrappers
-    - `backend/mappls_client.py` — routing helpers, polyline decoding, OAuth handling
-    - `backend/retrain_models.py` — training orchestration and model dumps
+1. **Ingest** real-time news and RSS feeds.
+2. **Analyze** unstructured event information using NLP.
+3. **Geo-map** events to road corridors and traffic zones.
+4. **Predict** traffic impact using ML models.
+5. **Recommend** operational actions through an interactive dashboard.
 
-- Models & Data:
-    - `trained_models/` — serialized model artifacts (do not delete without archiving)
-    - `components.json` — UI layout / component metadata used by the frontend
+The platform enables city authorities to proactively manage traffic before congestion escalates.
 
 ---
 
-## 4. Local Development
+## Key Features
 
-Prereqs:
-- NodeJS 18+ (pnpm or npm/yarn supported; repo includes `pnpm-lock.yaml`)
-- Python 3.9–3.11
+### Live Event Intelligence
 
-Backend (developer mode):
+* Continuous ingestion of news and RSS feeds.
+* Automatic extraction of event type, location, severity, and timing.
 
-1. Create and activate a Python virtualenv in `backend/`:
+### Predictive Traffic Analytics
 
-```powershell
-cd backend
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-```
+* Forecast incident volumes.
+* Predict road closures.
+* Estimate congestion hotspots.
+* Evaluate event impact scores.
 
-2. Run the Flask backend (development):
+### Route Diversion Engine
 
-```powershell
-# from backend/
-$env:FLASK_APP = 'backend'
-$env:FLASK_ENV = 'development'
-python -m flask run --port 5000
-```
+* Alternative route generation using Mappls APIs.
+* Real-time travel distance and duration estimation.
 
-Frontend (developer mode):
+### Cascade Studio
 
-```bash
-# from project root
-pnpm install
-pnpm dev
-# or npm install && npm run dev
-```
+* Simulate traffic scenarios.
+* Analyze how one disruption impacts nearby corridors.
+* Evaluate visitor surge effects on road networks.
 
-Set environment variables in a `.env` file in the repo root (example below). The frontend uses `NEXT_PUBLIC_API_BASE_URL` to call the backend.
+### Resource Deployment Planning
 
-Environment example (repo root `.env`):
+* Officer deployment recommendations.
+* Barricade placement suggestions.
+* Emergency corridor planning.
 
-```env
-MAPPLS_CLIENT_ID=
-MAPPLS_CLIENT_SECRET=
-MAPPLS_REST_API_KEY=
-NEXT_PUBLIC_MAPPLS_REST_API_KEY=
-NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:5000/api
+### Explainable AI
+
+* Displays important model drivers.
+* Provides transparent prediction reasoning for operators.
+
+---
+
+## System Architecture
+
+```text
+News/RSS Feeds
+       │
+       ▼
+News Scraper
+       │
+       ▼
+Event Normalization
+       │
+       ▼
+Geo-Mapping Engine
+       │
+       ▼
+Machine Learning Models
+       │
+       ▼
+Mappls Routing Engine
+       │
+       ▼
+Traffic Operations Dashboard
 ```
 
 ---
 
-## 5. Deployment (Render.com)
+## Machine Learning Models
 
-We include a `render.yaml` manifest to deploy the frontend and backend as separate services. The manifest sets build/start commands and placeholder env vars used for production. See [render.yaml](render.yaml) for the canonical manifest used during the hackathon demo.
-
-Basic Render steps summary:
-1. Create a new Render service from the repo and import the `render.yaml` (Render will create two services: frontend and backend).
-2. Set required environment variables in Render dashboard (Mappls keys, CORS_ORIGINS, etc.).
-3. Deploy; both services will auto-deploy on git commit.
-
----
-
-## 6. ML Models & Retraining
-
-Where models live:
-- `trained_models/` contains saved model artifacts and JSON metadata.
-
-Training workflow (high level):
-1. Prepare training CSVs via `backend/tools/*` or Jupyter notebooks.
-2. Run `backend/retrain_models.py` which trains and writes joblib outputs to `trained_models/`.
-3. Commit model metadata (not large binary files) and consider storing actual model binaries in an object store if collaborating.
-
-Notes on reproducibility:
-- Use pinned package versions in `backend/requirements.txt`.
-- Tests and manual validation notebooks are in the repo; include model metrics in `docs/MODELS_README.md`.
+| Model                       | Purpose                       | Algorithm                 |
+| --------------------------- | ----------------------------- | ------------------------- |
+| Incident Volume Forecasting | Predict incident count        | LightGBM                  |
+| Road Closure Prediction     | Closure classification        | Random Forest + SMOTE     |
+| Officer Deployment          | Resource recommendation       | Gradient Boosting         |
+| Barricade Deployment        | Resource recommendation       | Gradient Boosting         |
+| Hotspot Risk Prediction     | Congestion risk estimation    | LightGBM                  |
+| Duration Prediction         | Event duration estimation     | LightGBM                  |
+| Impact Score Prediction     | Event impact assessment       | LightGBM                  |
+| Cascade Modeling            | Corridor propagation analysis | Markov Chain              |
+| Parking Overflow Detection  | Parking demand prediction     | Logistic Regression / GBM |
+| Green Corridor Routing      | Emergency route optimization  | Dijkstra Graph Algorithm  |
 
 ---
 
-## 7. Demo Script & Hackathon Talking Points (Step-by-step)
+## Dataset
 
-Demo duration: ~6–8 minutes
+### Traffic Incident Dataset
 
-1. Elevator pitch (30s): explain problem, dataset, and what ASTRAM produces.
-2. Live demo (3–4 min):
-     - Show the dashboard and a current event from `GET /api/news`.
-     - Run a scenario: open Cascade Studio, apply a +20k visitors perturbation, and show impact scores and recommended officer deployment.
-     - Trigger a route calculation: demonstrate Mappls-backed route geometry (via `fetch_mappls_route`) and show suggested diversions.
-3. ML explanation (1–2 min): briefly describe top-performing models, key features, and model validation metrics.
-4. Operational value & next steps (30s): mention integration with city operations, adaptor for live sensor feeds, and improvements (real-time telemetry, privacy-safe telemetry storage).
+* 8,173 anonymized Bengaluru traffic incidents
+* Temporal features:
 
-Suggested slides and talking bullets:
-- Problem statement + city impact
-- Data sources and ETL pipeline
-- ML ensemble architecture + metrics
-- Live demo + UI walkthrough
-- Limitations and future work
+  * Hour
+  * Weekday
+  * Month
+* Location features:
+
+  * Zone
+  * Corridor
+  * Junction
+* Context features:
+
+  * Event Type
+  * Priority
+  * Closure Flag
+
+### Feature Engineering
+
+* Label Encoding
+* Missing Value Imputation
+* Duration Extraction
+* Corridor-Based Aggregation
+* Impact Score Generation
 
 ---
 
-## 8. Candidate Files For Removal (please confirm before I delete)
+## Tech Stack
 
-I recommend we do NOT automatically delete anything without your confirmation. Below are files I think are likely unnecessary, large, or duplicates. Confirm which you want removed and I will delete them and update `.gitignore` as needed.
+### Frontend
 
-- `Astram event data_anonymized - Astram event data_anonymizedb40ac87.csv` — looks like a duplicate/accidental export (likely large). Candidate for removal or moving to `archive/`.
-- `ASTRAM_CongestionIQ_ML_SUBMISSION.ipynb` — if this is a submission notebook duplicate, consider archiving or removing.
-- Any large artifacts accidentally checked in (e.g., big model binaries inside source folders). Leave `trained_models/` only after confirmation.
+* Next.js
+* React
+* Interactive Dashboard
+* Real-Time Polling
 
-To remove a file locally (example):
+### Backend
 
-```powershell
-# from repo root
-Remove-Item "Astram event data_anonymized - Astram event data_anonymizedb40ac87.csv"
-# or move to archive
-Move-Item "Astram event data_anonymized - Astram event data_anonymizedb40ac87.csv" archive\
+* Flask
+* REST APIs
+* Blueprint Architecture
+* Authentication & Token Management
+
+### Machine Learning
+
+* Scikit-learn
+* LightGBM
+* Random Forest
+* Gradient Boosting
+* Joblib
+
+### Geospatial Intelligence
+
+* Mappls (MapmyIndia)
+* Route Geometry
+* Polyline Decoding
+* Corridor Mapping
+
+### Deployment
+
+* Render.com
+* CI/CD Auto Deployment
+* Separate Frontend and Backend Services
+
+---
+
+## API Endpoints
+
+### Health Check
+
+```http
+GET /api/health
+```
+
+### News Feed
+
+```http
+GET /api/news
+```
+
+### Prediction Service
+
+```http
+POST /api/predict
+```
+
+### Mappls Token
+
+```http
+GET /api/mappls/token
 ```
 
 ---
 
-## 9. Troubleshooting
+## Performance Metrics
 
-- Mappls errors: ensure `MAPPLS_REST_API_KEY` or `MAPPLS_CLIENT_*` env vars are set; check `backend/mappls_client.py` logs.
-- Model import issues: ensure `trained_models/` contains required artifacts and `requirements.txt` dependencies match the training environment.
+| Metric                    | Score |
+| ------------------------- | ----- |
+| Road Closure Accuracy     | 91.2% |
+| Parking Overflow Accuracy | 97.7% |
+| Hotspot Risk R²           | 0.89  |
+| Incident Volume R²        | 0.84  |
+| Impact Score R²           | 0.99* |
+
+*Impact Score model is currently under audit for potential feature leakage and will be retrained in future versions.
 
 ---
 
-## 10. Next Steps I can take for you
+## Future Roadmap
 
-- Apply the file deletions you confirm and update `.gitignore`.
-- Add a short `DEMO.md` with the exact commands and screenshots for judges.
-- Create a minimal `presentation/` slide deck with the architecture mermaid diagram.
+### Q1
 
-If you want me to delete the candidate files above, reply which ones to remove and I will perform the deletions.
+* Live sensor integration
+* Traffic camera connectivity
+
+### Q2
+
+* Expansion to Delhi, Mumbai, and Chennai
+
+### Q3
+
+* Advanced duration classification
+* Model audit completion
+
+### Q4
+
+* Continuous retraining pipeline
+* Feedback-driven optimization
+
+---
+
+## Why ASTRAM?
+
+### News → Intelligence
+
+Transforms unstructured event information into traffic intelligence.
+
+### City-Specific Predictions
+
+Built using real Bengaluru traffic incident data.
+
+### Operations Ready
+
+Provides actionable recommendations rather than raw analytics.
+
+---
+
+## Team
+
+* Nihaarika
+* Pearl Rubyth Thomas
+* Sai Krisha D
+
+---
+
+## Vision
+
+ASTRAM CongestionIQ aims to become the predictive intelligence layer for smart city traffic operations by helping authorities:
+
+* Predict congestion before it occurs
+* Optimize resource deployment
+* Improve emergency response
+* Enhance urban mobility
+
+**Predict. Prepare. Respond. Learn.**
