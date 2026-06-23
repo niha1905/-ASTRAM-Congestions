@@ -1,3 +1,191 @@
+# Model Workflow — Track A
+
+This repository contains model code, training utilities, serving endpoints, and front-end integrations for the Track A project. This README describes the end-to-end model lifecycle: data, training, evaluation, deployment, monitoring, and how the app integrates ML predictions.
+
+## Contents
+- **Overview** — high-level architecture and responsibilities.
+- **Data** — sources, storage, and preprocessing.
+- **Modeling** — model types, training pipeline, and evaluation.
+- **Serving** — inference, API endpoints, and frontend integration.
+- **Retraining & CI** — how to retrain and schedule updates.
+- **Monitoring & Metrics** — validation, drift detection, and alerts.
+- **Files & References** — key files in this repo.
+- **Quick Start** — local commands to run training and server.
+
+## Overview
+
+The ML components are structured to separate concerns between model logic, feature preparation, training orchestration, and serving. Backend Python modules host model loaders, predictors, and REST endpoints. Frontend components call the backend prediction APIs and render results in the UI.
+
+Key directories:
+
+- [backend](backend): Python service with model logic, routes, and utilities.
+- [trained_models](trained_models): persisted model artifacts and summaries.
+- [components/ml](components/ml) and [hooks](hooks): frontend components and hooks that consume model output.
+- [lib](lib): client utilities and API wrappers used by frontend code.
+
+## Data
+
+Primary data sources and storage:
+
+- Event and telemetry CSVs (archived under `archive/`).
+- External APIs via [backend/mappls_client.py](backend/mappls_client.py).
+
+Preprocessing:
+
+- Scripts and functions in `backend/predictors.py` and `backend/model_loader.py` perform feature extraction and normalization.
+- Persisted datasets for experiments can be placed in `archive/` and referenced by training scripts.
+
+## Modeling
+
+Model types and responsibilities:
+
+- Short-lived heuristics and analytic functions live alongside ML code in `backend/predictors.py`.
+- Advanced models and serializations are stored in `trained_models/` and summarized in `trained_models/advanced_models_summary.json`.
+
+Training pipeline:
+
+1. Prepare and clean data using the ETL helpers in `backend/predictors.py`.
+2. Run training scripts (examples below) which produce serialized model artifacts and evaluation reports.
+
+Example training scripts:
+
+- [backend/retrain_models.py](backend/retrain_models.py) — higher-level orchestrator for retraining workflows.
+- [backend/tools/train_duration_classifier.py](backend/tools/train_duration_classifier.py) — example classifier training utility.
+
+Evaluation and metrics:
+
+- Evaluation logic lives next to training code and writes metrics to JSON or logs.
+- Use `backend/tools/check_model_metrics.py` to validate metrics and guard releases.
+
+Versioning and artifacts:
+
+- Store trained artifacts in `trained_models/` with clear naming that includes model type, dataset snapshot, and timestamp.
+- Keep `trained_models/advanced_models_summary.json` in sync with production deployments.
+
+## Serving & Inference
+
+Serving architecture:
+
+- Model loading and inference are handled by `backend/model_loader.py` and `backend/models/model_loader.py` (see `backend/models` for model-specific code).
+- Prediction endpoints are exposed under `backend/routes/`, notably [backend/routes/predictions.py](backend/routes/predictions.py).
+
+Integration with frontend:
+
+- Frontend components and hooks that request predictions include [hooks/use-ml-predictions.ts](hooks/use-ml-predictions.ts) and UI pieces in [components/ml](components/ml).
+- The frontend client wrappers live in [lib/ml-api-client.ts](lib/ml-api-client.ts) and [lib/api.ts](lib/api.ts).
+
+Example request (curl):
+
+```bash
+curl -X POST http://localhost:8000/predict \
+  -H "Content-Type: application/json" \
+  -d '{"event": {"latitude": 12.9, "longitude": 77.6, "timestamp": "2025-01-01T12:00:00Z"}}'
+```
+
+Or using the frontend client in code:
+
+See [lib/ml-api-client.ts](lib/ml-api-client.ts) for JS/TS examples.
+
+## Retraining & Continuous Training
+
+When to retrain:
+
+- Detectable performance degradation on production metrics.
+- Data distribution shift or significant feature drift.
+- New labeled data availability.
+
+Retraining process:
+
+1. Collect the latest labeled dataset and confirm data quality.
+2. Run the training script (see `backend/retrain_models.py`).
+3. Evaluate and compare metrics against the production baseline.
+4. If improved, publish the artifact to `trained_models/` and update `advanced_models_summary.json`.
+5. Deploy the new artifact and monitor.
+
+Automation tips:
+
+- Use CI to run reproducible training and validation jobs. Store intermediate artifacts and metrics in an artifact store or within `trained_models/` with immutable filenames.
+- Automate canary rollout and A/B test of new models in production before full cutover.
+
+## Monitoring & Metrics
+
+What to track:
+
+- Prediction latencies, error rates, and throughput.
+- Model performance metrics over time (MAE, RMSE, accuracy, F1, depending on model).
+- Input feature distributions to detect drift.
+
+Tools in repo:
+
+- [backend/tools/check_model_metrics.py](backend/tools/check_model_metrics.py) — scripts to check metric thresholds.
+- Frontend health checks: see `components/ml/ml-health-check.tsx` and `components/ml/example-event-analysis.tsx` for UI hooks that surface model health.
+
+Alerts & escalation:
+
+- Wire metric failures to your monitoring/alerting system (PagerDuty, Slack, etc.) from your CI or monitoring jobs.
+
+## Security & Privacy
+
+- Remove or anonymize PII before using datasets for training; archived CSVs under `archive/` should be preprocessed accordingly.
+- Enforce strict access controls for `trained_models/` and any artifact stores.
+
+## Files & References
+
+- Model loader: [backend/model_loader.py](backend/model_loader.py)
+- Training orchestrator: [backend/retrain_models.py](backend/retrain_models.py)
+- Predictors and feature code: [backend/predictors.py](backend/predictors.py)
+- Routes: [backend/routes/predictions.py](backend/routes/predictions.py)
+- Training tools: [backend/tools/train_duration_classifier.py](backend/tools/train_duration_classifier.py)
+- Metrics check: [backend/tools/check_model_metrics.py](backend/tools/check_model_metrics.py)
+- Frontend client: [lib/ml-api-client.ts](lib/ml-api-client.ts)
+- Frontend hook: [hooks/use-ml-predictions.ts](hooks/use-ml-predictions.ts)
+- Requirements: [backend/requirements.txt](backend/requirements.txt)
+- Model artifacts dir: `trained_models/`
+
+## Quick Start
+
+1. Create a Python virtual environment and install backend dependencies:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate   # use `.\\.venv\\Scripts\\activate` on Windows PowerShell
+pip install -r backend/requirements.txt
+```
+
+2. Run the backend server locally (example):
+
+```bash
+# From repository root
+python -m backend.__main__
+```
+
+3. Trigger training (example):
+
+```bash
+python backend/retrain_models.py --config configs/retrain_config.yaml
+```
+
+4. Call the prediction endpoint using `curl` or the frontend.
+
+## Troubleshooting
+
+- If a model fails to load, confirm the artifact path and compatibility with the loader in `backend/model_loader.py`.
+- If predictions are slow, inspect serialization format (use joblib or optimized formats) and the inference hardware.
+- If metrics degrade after deployment, roll back to the previous artifact and run `backend/tools/check_model_metrics.py`.
+
+## Contributing
+
+- Keep training code and model evaluation deterministic and version-controlled.
+- Add unit tests for preprocessing and model I/O to avoid silent breakages.
+
+---
+
+If you'd like, I can also:
+
+- Add a short `CONTRIBUTING.md` describing how to add a new model.
+- Create example `configs/retrain_config.yaml` used by the retrain script.
+
+File created: [README.md](README.md)
 # ASTRAM CongestionIQ🚦 Predict traffic disruptions before they happen
 
 ASTRAM is an AI-powered traffic intelligence platform that converts real-time news events into congestion forecasts, road closure predictions, diversion routes, and operational deployment recommendations for city traffic management teams.
