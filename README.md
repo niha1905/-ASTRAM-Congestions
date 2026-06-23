@@ -1,3 +1,7 @@
+# ASTRAM CongestionIQ🚦 Predict traffic disruptions before they happen
+
+ASTRAM is an AI-powered traffic intelligence platform that converts real-time news events into congestion forecasts, road closure predictions, diversion routes, and operational deployment recommendations for city traffic management teams.
+
 # ASTRAM CongestionIQ — Detailed Project README
 
 One-line summary: Real-time event-driven traffic intelligence platform that ingests news and operational signals, predicts local traffic impact using an ensemble of ML models and graph algorithms, and produces actionable resource and routing recommendations for operators.
